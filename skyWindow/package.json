@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "ThreeJS, WebGL sketches",
   "main": "index.js",
-  "license": "MIT",
+  "license": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License",
   "author": {
     "name": "Ray Victor",
     "email": "ray7551@gmail.com",
@@ -23,6 +23,7 @@
   },
   "scripts": {
     "start": "../node_modules/.bin/budo.cmd index.js:bundle.js -v -d --live",
+    "startssl": "../node_modules/.bin/budo.cmd index.js:bundle.js -v -d --live --ssl --cert=../../server.cer --key=../../server.key",
     "build": "../node_modules/.bin/browserify.cmd index.js | ../node_modules/.bin/uglifyjs.cmd -cm > bundle.js"
   },
   "private": true,
