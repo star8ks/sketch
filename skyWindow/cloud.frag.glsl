@@ -9,13 +9,8 @@ uniform float uScale;
 uniform vec2 uTextureOffset;
 uniform float uMorphAmount;
 uniform float uRandomSeed;
+uniform vec3 uBlue;
 
-#define CLOUDY 2.992
-#define SHADOW_THRESHOLD 0.5
-#define SHADOW 0.24
-
-#define MORPH_SPEED 0.004
-#define INIT_SCALE 0.7
 
 #define PI 3.14
 #define ANGLE PI/5.0
@@ -79,15 +74,19 @@ float cloud(vec3 p) {
   return a * a;
 }
 
+#define CLOUDY 3.0
+#define SHADOW_THRESHOLD 0.5
+#define SHADOW 0.24
+
+#define MORPH_SPEED 0.004
 float shadow = 1.0;
 float clouds(vec3 p) {
   float ic = cloud(vec3(p * 2.0)) / (randomBetween(uMorphAmount * MORPH_SPEED, 0.1, 1.0) * CLOUDY);
   float init = smoothstep(0.1, 1.0, ic) * 3.0;
-  shadow = smoothstep(0.0, SHADOW_THRESHOLD, ic) * SHADOW + (1.0 - SHADOW);
+  shadow = smoothstep(0.0, SHADOW_THRESHOLD - uBlue.b*0.3, ic) * SHADOW + (1.0 - SHADOW);
   init = init * cloud(vec3(p * 6.0)) * ic;
   //init = init * (cloud(vec3(p * (11.0))) * 0.5 + 0.4);
   return min(1.0, init);
-  // return min(1.0, ic);
 }
 
 vec3 skyWindow(vec3 position) {
@@ -97,12 +96,13 @@ vec3 skyWindow(vec3 position) {
   shadow = min(1.0, shadow);
   vec3 color = mix(
     vec3(shadow),
-    vec3(0.247,0.529,0.905),//vec3(0.237,0.380,0.830),//vec3(0.23, 0.33, 0.48),
+    uBlue,//vec3(0.237,0.380,0.830),//vec3(0.23, 0.33, 0.48),
     c
   );
   return color;
 }
 
+#define INIT_SCALE 0.7
 #define initMoveSpeed 0.25
 void main(void ) {
   vec2 position = (gl_FragCoord.xy * 2.0 - uResolution.xy) / min(uResolution.x, uResolution.y);
