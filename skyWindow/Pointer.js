@@ -8,6 +8,8 @@ class Pointer {
 
     this.dom = domElement;
     this.opt = { scaleMin, scaleMax, pressureMax, pressureDuration };
+    this.pressCheckInterval = 20;
+    this.deltaPressure = this.opt.pressureMax / this.opt.pressureDuration * this.pressCheckInterval;
 
     this.position = new THREE.Vector2();
     this.zoomSpeed = 1.0;
@@ -37,8 +39,8 @@ class Pointer {
 
   updatePosition(clientX, clientY) {
     let size = Math.min(this.dom.clientWidth, this.dom.clientHeight);
-    this.position.x = (clientX*2 - this.dom.clientWidth) / size;
-    this.position.y = ((this.dom.clientHeight-clientY)*2 - this.dom.clientHeight) / size;
+    this.position.x = (clientX * 2 - this.dom.clientWidth) / size;
+    this.position.y = ((this.dom.clientHeight - clientY) * 2 - this.dom.clientHeight) / size;
   }
 
   onMove(e) {
@@ -62,11 +64,11 @@ class Pointer {
   setPressure(val) {
     let valid = val <= this.opt.pressureMax && val >= 0.0;
     this.pressure = THREE.Math.clamp(val, 0.0, this.opt.pressureMax);
-    //   console.log(this.pressure);    
+    //   console.log(this.pressure);
     return valid;
   }
   onDown(e) {
-    if(e instanceof MouseEvent && e.button !== Pointer.BUTTON.MOUSE_LEFT) {
+    if (e instanceof MouseEvent && e.button !== Pointer.BUTTON.MOUSE_LEFT) {
       return;
     }
 
@@ -78,13 +80,20 @@ class Pointer {
     }
 
 
-    let interval = 50;
     let intervalID = setInterval(() => {
-      let deltaPressure = this.opt.pressureMax / this.opt.pressureDuration * interval;
-      if (!this.isPressing || !this.setPressure(this.pressure + deltaPressure)) {
+      if (!this.isPressing || !this.setPressure(this.pressure + this.deltaPressure)) {
         clearInterval(intervalID);
       }
-    }, interval);
+    }, this.pressCheckInterval);
+
+    let pressingTest = setInterval(() => {
+      if(this.isPressing) {
+        var event = new CustomEvent('Pointer.pressing', { detail: this.pressure });
+        this.dom.dispatchEvent(event);
+      } else {
+        clearInterval(pressingTest);
+      }
+    }, this.pressCheckInterval);
   }
   addDownListener(cb) {
     ['mousedown', 'touchstart'].forEach(evtName => {
@@ -92,20 +101,31 @@ class Pointer {
     });
   }
 
+  addPressingListener(cb) {
+    ['Pointer.pressing', 'Pointer.postpressing'].forEach(evtName => {
+      this.dom.addEventListener(evtName, cb, false);
+    });
+  }
+  addPressingEndListener(cb) {
+    this.dom.addEventListener('Pointer.pressingEnd', cb, false);
+  }
+
   onUp(e) {
-    if(e instanceof MouseEvent && e.button !== Pointer.BUTTON.MOUSE_LEFT) {
+    if (e instanceof MouseEvent && e.button !== Pointer.BUTTON.MOUSE_LEFT) {
       return;
     }
-
+    
     this.isPressing = false;
-    let interval = 50;
-
     let intervalID = setInterval(() => {
-      let deltaPressure = this.opt.pressureMax / this.opt.pressureDuration * interval;
-      if (this.isPressing || !this.setPressure(this.pressure - deltaPressure)) {
+      if (this.isPressing || !this.setPressure(this.pressure - this.deltaPressure)) {
+        var event = new CustomEvent('Pointer.pressingEnd', { detail: this.pressure });
+        this.dom.dispatchEvent(event);
         clearInterval(intervalID);
+      } else {
+        var event = new CustomEvent('Pointer.postpressing', { detail: this.pressure });
+        this.dom.dispatchEvent(event);
       }
-    }, interval);
+    }, this.pressCheckInterval);
   }
   addUpListener(cb) {
     ['mouseup', 'touchend'].forEach(evtName => {

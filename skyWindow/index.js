@@ -68,21 +68,17 @@ mouse.addDownListener(e => {
     app.controls.noRotate = false;
   }
 });
-mouse.addUpListener(e => {});
 mouse.addZoomListener(e => {
   shaderMat.uniforms.uScale.value = mouse.scale;
 });
 
-
-let time = 0;
-let textureOffset = new THREE.Vector2(0, 0);
-let morphAmount = 0;
-const cloudRunSpeed = 0.01;
-const blueVarySpeed = 0.1;
-app.on('tick', dt => {
-  let dtSec = dt / 1000;
-  time += dtSec;
-  shaderMat.uniforms.uTime.value = time;
+let dtSec = 0;
+let lastPressingT;
+mouse.addPressingListener(e => {
+  lastPressingT = lastPressingT || Date.now();
+  const nowInMs = Date.now();
+  dtSec = (nowInMs - lastPressingT) / 1000;
+  lastPressingT = nowInMs;
 
   textureOffset.add(mouse.position.clone().multiplyScalar(dtSec * mouse.pressure * cloudRunSpeed));
   morphAmount += dtSec * mouse.pressure;
@@ -98,6 +94,20 @@ app.on('tick', dt => {
     ...newBlue
   ));
   app.engine.context.clearColor(...newBlue, 1.0);
+});
+mouse.addPressingEndListener(() => {
+  lastPressingT = undefined;
+});
+
+let time = 0;
+let textureOffset = new THREE.Vector2(0, 0);
+let morphAmount = 0;
+const cloudRunSpeed = 0.01;
+const blueVarySpeed = 0.1;
+app.on('tick', dt => {
+  let dtSec = dt / 1000;
+  time += dtSec;
+  shaderMat.uniforms.uTime.value = time;
 });
 
 let fovRunning = false;
