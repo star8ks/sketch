@@ -1,6 +1,6 @@
 // adapted from http://glslsandbox.com/e#41764 by afl_ext
 // #pragma glslify: snoise3 = require(glsl-noise/simplex/3d) // too slow
-// precision highp float;
+//precision mediump float;
 
 uniform vec2 uResolution;
 uniform float uTime;
@@ -63,46 +63,41 @@ float fbm(vec3 p) {
   p *= 2.0; f += 0.12500 * noise(p);
   p *= 2.0; f += 0.06250 * noise(p);
   p *= 2.0; f += 0.03125 * noise(p);
-  // p *= 4.01; f += 0.01250 * noise(p);
+  p *= 5.01; f += 0.01250 * noise(p);
   // p *= 4.04; f -= 0.00125 * noise(p);
   return f;
 }
 
+#define CLOUD_COMPLEX 3.0
+#define CLOUDY 0.8
+#define MORPH_SPEED 0.004
 float cloud(vec3 p) {
   p -= fbm(vec3(p.x, p.y, 0.0) * 0.5);
-  float a = min((fbm(p * 3.0) * 2.2-1.1), 0.0);
-  return a * a;
+  float a = min((fbm(p * CLOUD_COMPLEX) * 2.0 - 1.0), 0.0);
+  return a * a / (randomBetween(uMorphAmount * MORPH_SPEED, 0.3, 1.0) * CLOUDY);
 }
 
-#define CLOUDY 3.0
-#define SHADOW_THRESHOLD 0.5
-#define SHADOW 0.24
 
-#define MORPH_SPEED 0.004
-float shadow = 1.0;
-float clouds(vec3 p) {
-  float ic = cloud(vec3(p * 2.0)) / (randomBetween(uMorphAmount * MORPH_SPEED, 0.1, 1.0) * CLOUDY);
-  float init = smoothstep(0.1, 1.0, ic) * 3.0;
-  shadow = smoothstep(0.0, SHADOW_THRESHOLD - uBlue.b*0.3, ic) * SHADOW + (1.0 - SHADOW);
-  init = init * cloud(vec3(p * 6.0)) * ic;
-  //init = init * (cloud(vec3(p * (11.0))) * 0.5 + 0.4);
-  return min(1.0, init);
-}
-
+// #define SHADOW_THRESHOLD 0.5
+// #define SHADOW 0.24
+#define SHADOW_THRESHOLD 0.4
+#define SHADOW_GRAY 0.15
 vec3 skyWindow(vec3 position) {
-  float st = 1.0;
-  float c = clouds(position);
-
+  float initCloud = cloud(position);
+  float cloud = min(1.0, initCloud * initCloud);
+  float shadow = smoothstep(0.0, SHADOW_THRESHOLD - uBlue.b*0.3, initCloud) * SHADOW_GRAY + (1.0 - SHADOW_GRAY);
   shadow = min(1.0, shadow);
+
   vec3 color = mix(
     vec3(shadow),
     uBlue,//vec3(0.237,0.380,0.830),//vec3(0.23, 0.33, 0.48),
-    c
+    cloud
   );
-  return color;
+  // color = 1.0 - vec3(cloud);// + vec3(shadow);
+  return color;//vec3(cloud);//vec3(ic);//vec3(shadow);//
 }
 
-#define INIT_SCALE 0.7
+#define INIT_SCALE 1.0
 #define initMoveSpeed 0.25
 void main(void ) {
   vec2 position = (gl_FragCoord.xy * 2.0 - uResolution.xy) / min(uResolution.x, uResolution.y);
