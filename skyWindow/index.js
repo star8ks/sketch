@@ -4,7 +4,7 @@ const glslify = require('glslify');
 const Random = require('./Random');
 const Pointer = require('./Pointer');
 
-const devEnv = true;
+const devEnv = false;
 
 const blue = [new THREE.Color(0x3F87E7), new THREE.Color(0x147aff), new THREE.Color(0x1F5EBB)];
 const app = createOrbitViewer({
@@ -12,18 +12,19 @@ const app = createOrbitViewer({
   // clearAlpha: 0.9,
   // clearColor: 0x4188E7,
   // clearAlpha: 1.0,
+  contextAttributes: {precision: 'mediump'},
   clearColor: blue[0].getHex(), //0.247, 0.529, 0.905
   clearAlpha: 1.0,
   fov: 40,
   position: new THREE.Vector3(0, 0, 100)
 });
-console.log("app", app);
 // app.controls.noZoom = true;
 app.controls.noRotate = true;
 app.controls.noPan = true;
 // const canvas = app.renderer.domElement;
 
-const randomSeed = new Date().getTime() % 1000000;
+const randomSeed = devEnv ? 183746 : new Date().getTime() % 1000000;
+// const randomSeed = new Date().getTime() % 1000000;
 const random = new Random(randomSeed);
 
 const shaderMat = new THREE.ShaderMaterial({
@@ -52,8 +53,8 @@ app.camera.lookAt(skyWindow.position);
 
 const mouse = new Pointer(app.renderer.domElement, {
   scaleMin: 0.4,
-  scaleMax: 3.0,
-  pressureDuration: 1100
+  scaleMax: 2.0,
+  pressureDuration: 2300
 });
 
 mouse.addMoveListener(e => {
@@ -74,6 +75,11 @@ mouse.addZoomListener(e => {
 
 let dtSec = 0;
 let lastPressingT;
+let textureOffset = new THREE.Vector2(0, 0);
+let morphAmount = 0;
+const morphSpeed = devEnv ? 0.02 : 0.004;
+const cloudRunSpeed = devEnv ? 0.8 : 0.03;
+const blueVarySpeed = devEnv ? 0.4 : 0.05;
 mouse.addPressingListener(e => {
   lastPressingT = lastPressingT || Date.now();
   const nowInMs = Date.now();
@@ -83,7 +89,7 @@ mouse.addPressingListener(e => {
   textureOffset.add(mouse.position.clone().multiplyScalar(dtSec * mouse.pressure * cloudRunSpeed));
   morphAmount += dtSec * mouse.pressure;
   shaderMat.uniforms.uTextureOffset = new THREE.Uniform(textureOffset.clone());
-  shaderMat.uniforms.uMorphAmount.value = morphAmount;
+  shaderMat.uniforms.uMorphAmount.value = morphAmount * morphSpeed;
 
   // set clear blue and pass new blue
   const r = random.getBetween(morphAmount * blueVarySpeed, 0.0, 1.99);
@@ -93,6 +99,7 @@ mouse.addPressingListener(e => {
   shaderMat.uniforms.uBlue = new THREE.Uniform(new THREE.Vector3(
     ...newBlue
   ));
+  // shaderMat.needChange = true;
   app.engine.context.clearColor(...newBlue, 1.0);
 });
 mouse.addPressingEndListener(() => {
@@ -100,10 +107,6 @@ mouse.addPressingEndListener(() => {
 });
 
 let time = 0;
-let textureOffset = new THREE.Vector2(0, 0);
-let morphAmount = 0;
-const cloudRunSpeed = 0.01;
-const blueVarySpeed = 0.1;
 app.on('tick', dt => {
   let dtSec = dt / 1000;
   time += dtSec;
@@ -115,7 +118,7 @@ let leftTopPoint = skyWindow.geometry.vertices[0];
 const targetSize = 0.8;
 const deltaFov = 0.4;
 app.on('resize', () => {
-  if(fovRunning) return;
+  if(fovRunning || devEnv) return;
   (function fovAnimation() {
     let leftTop = leftTopPoint.clone().applyMatrix4(skyWindow.matrixWorld).project(app.camera);
     let change = needChange(leftTop);

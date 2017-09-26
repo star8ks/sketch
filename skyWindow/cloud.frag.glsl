@@ -63,50 +63,91 @@ float fbm(vec3 p) {
   p *= 2.0; f += 0.12500 * noise(p);
   p *= 2.0; f += 0.06250 * noise(p);
   p *= 2.0; f += 0.03125 * noise(p);
-  p *= 5.01; f += 0.01250 * noise(p);
+  // p *= 2.0; f += 0.01250 * noise(p);
   // p *= 4.04; f -= 0.00125 * noise(p);
   return f;
 }
 
+// #define DEBUG
+#define CLOUDY_MIN 0.03
+#define CLOUDY_MAX 0.09
 #define CLOUD_COMPLEX 3.0
-#define CLOUDY 0.8
-#define MORPH_SPEED 0.004
+// #define CLOUD_SYTLE0
+#define CLOUD_SYTLE1
+// #define CLOUD_SYTLE2
 float cloud(vec3 p) {
-  p -= fbm(vec3(p.x, p.y, 0.0) * 0.5);
-  float a = min((fbm(p * CLOUD_COMPLEX) * 2.0 - 1.0), 0.0);
-  return a * a / (randomBetween(uMorphAmount * MORPH_SPEED, 0.3, 1.0) * CLOUDY);
+  // p *= CLOUD_COMPLEX;
+  // float a = max(fbm(p), 0.0);
+  // it produce intreseting texture by warpping fbm like fbm(p + fmb(p))
+  // see http://www.iquilezles.org/www/articles/warp/warp.htm
+  #if defined(CLOUD_SYTLE0)
+  float a = max(fbm(p * CLOUD_COMPLEX + fbm(p)), 0.0);
+  #elif defined(CLOUD_SYTLE1)
+  float a = max(fbm(p + fbm(p + fbm(p * 3.0))), 0.0);
+  #elif defined(CLOUD_SYTLE2)
+  float a = max(fbm(p + fbm(p)) * 6.0, 0.0);
+  #endif
+  return a * a;
 }
+#ifdef CLOUD_SYTLE2
+#define SHADOW_THRESHOLD 0.5
+#else
+#define SHADOW_THRESHOLD 0.3
+#endif
+#define SHADOW_GRAY 0.76
+vec3 skyWindow(vec3 position, vec2 screen) {
+  #ifdef DEBUG
+  float cloudy = CLOUDY_MAX;
+  #else
+  float cloudy = randomBetween(uMorphAmount, CLOUDY_MIN, CLOUDY_MAX);
+  #endif
+  float initCloud = cloud(position) / cloudy;
+  float sharpCloud = min(1.0, smoothstep(0.1, 1.0, initCloud*initCloud)); // less edge detail
 
+  #ifdef CLOUD_SYTLE2
+  position *= 1.5;
+  initCloud = cloud(position) / cloudy / 10.0;
+  sharpCloud = smoothstep(0.1, 1.0, initCloud);
+  sharpCloud = smoothstep(0.1, 1.0, min(1.0, sharpCloud * cloud(position) * initCloud));
+  #endif
 
-// #define SHADOW_THRESHOLD 0.5
-// #define SHADOW 0.24
-#define SHADOW_THRESHOLD 0.4
-#define SHADOW_GRAY 0.15
-vec3 skyWindow(vec3 position) {
-  float initCloud = cloud(position);
-  float cloud = min(1.0, initCloud * initCloud);
-  float shadow = smoothstep(0.0, SHADOW_THRESHOLD - uBlue.b*0.3, initCloud) * SHADOW_GRAY + (1.0 - SHADOW_GRAY);
+  float shadow = SHADOW_GRAY;
+  shadow += smoothstep(0.0, SHADOW_THRESHOLD, initCloud) * (1.0 - SHADOW_GRAY);
   shadow = min(1.0, shadow);
 
   vec3 color = mix(
     vec3(shadow),
     uBlue,//vec3(0.237,0.380,0.830),//vec3(0.23, 0.33, 0.48),
-    cloud
+    sharpCloud
   );
-  // color = 1.0 - vec3(cloud);// + vec3(shadow);
-  return color;//vec3(cloud);//vec3(ic);//vec3(shadow);//
+  // color = 1.0 - vec3(sharpCloud);// + vec3(shadow);
+
+  #ifdef DEBUG
+  if(screen.x < 0.0 && screen.y > 0.0) {
+    return color;
+  } else if(screen.x > 0.0 && screen.y > 0.0) {
+    return vec3(shadow);
+  } else if(screen.x < 0.0 && screen.y < 0.0) {
+    return vec3(sharpCloud);
+  } else if(screen.x > 0.0 && screen.y < 0.0) {
+    return vec3(initCloud);
+  }
+  #else
+  return color;
+  #endif
 }
 
-#define INIT_SCALE 1.0
+#define INIT_SCALE 2.0
 #define initMoveSpeed 0.25
 void main(void ) {
-  vec2 position = (gl_FragCoord.xy * 2.0 - uResolution.xy) / min(uResolution.x, uResolution.y);
+  vec2 screen = (gl_FragCoord.xy * 2.0 - uResolution.xy) / min(uResolution.x, uResolution.y);
   // offset varys when mouse moving or pressing
-  position += uMouse * initMoveSpeed;
+  vec2 position = screen + uMouse * initMoveSpeed;
 
   float textureScale = uScale * INIT_SCALE + randomBetween(uTime, 0.0, 0.007*INIT_SCALE);
   // todo: caclulate matrix in js, zoom in mouse position
   position *= textureScale; // zoom in center point
   position += uTextureOffset;
-  gl_FragColor = skyWindow(vec3(position * ROTATE, uMorphAmount * MORPH_SPEED)).xyzz;
+  gl_FragColor.rgb = skyWindow(vec3(position * ROTATE, uMorphAmount), screen);
+  gl_FragColor.a = gl_FragColor.b;//1.0;//
 }
