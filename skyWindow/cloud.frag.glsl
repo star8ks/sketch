@@ -73,8 +73,8 @@ float fbm(vec3 p) {
 #define CLOUDY_MAX 0.09
 #define CLOUD_COMPLEX 3.0
 // #define CLOUD_SYTLE0
-#define CLOUD_SYTLE1
-// #define CLOUD_SYTLE2
+// #define CLOUD_SYTLE1
+#define CLOUD_SYTLE2
 float cloud(vec3 p) {
   // p *= CLOUD_COMPLEX;
   // float a = max(fbm(p), 0.0);
@@ -85,15 +85,11 @@ float cloud(vec3 p) {
   #elif defined(CLOUD_SYTLE1)
   float a = max(fbm(p + fbm(p + fbm(p * 3.0))), 0.0);
   #elif defined(CLOUD_SYTLE2)
-  float a = max(fbm(p + fbm(p)) * 6.0, 0.0);
+  float a = min(fbm(p + fbm(p)) * 2.2 - 1.1, 0.0);
   #endif
   return a * a;
 }
-#ifdef CLOUD_SYTLE2
 #define SHADOW_THRESHOLD 0.5
-#else
-#define SHADOW_THRESHOLD 0.3
-#endif
 #define SHADOW_GRAY 0.76
 vec3 skyWindow(vec3 position, vec2 screen) {
   #ifdef DEBUG
@@ -105,10 +101,11 @@ vec3 skyWindow(vec3 position, vec2 screen) {
   float sharpCloud = min(1.0, smoothstep(0.1, 1.0, initCloud*initCloud)); // less edge detail
 
   #ifdef CLOUD_SYTLE2
-  position *= 1.5;
+  const float edgeDetail = 3.0;
+  position *= 2.0;
   initCloud = cloud(position) / cloudy / 10.0;
-  sharpCloud = smoothstep(0.1, 1.0, initCloud);
-  sharpCloud = smoothstep(0.1, 1.0, min(1.0, sharpCloud * cloud(position) * initCloud));
+  sharpCloud = initCloud * initCloud;
+  sharpCloud = min(1.0, sharpCloud * cloud(position * edgeDetail));
   #endif
 
   float shadow = SHADOW_GRAY;
