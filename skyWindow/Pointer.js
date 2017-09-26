@@ -159,6 +159,7 @@ class Pointer {
     } else if (e.deltaY < 0) {
       this.zoomIn();
     }
+    e.preventDefault(); // prevent page scroll down
   }
   onZoom(e) {
     if (e.touches) {
