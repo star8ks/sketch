@@ -1,5 +1,5 @@
 # Impossible Window
-!(demo pic)[./window.gif]
+![demo gif](./window.gif)
 
 Inspired by Oscar Reutersvärd's "Impossible Window"
 
