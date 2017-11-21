@@ -1,38 +1,42 @@
 uniform vec2 uResolution;
 uniform float uTime;
 uniform vec2 uMouse;
+uniform mat4 model;
 
 struct Light {
   vec3 color;
-  vec3 position;
+  vec3 direction;
 };
 uniform Light lights[3];
 
-// varying vec4 vColor;
-varying vec3 vNormal, vPosition;
-void main () {
-  vec3 color = vec3(0, 0, 0);
-  for (int i = 0; i < 3; ++i) {
-    vec3 lightDir = normalize(lights[i].position - vPosition);
-    float diffuse = max(0.0, dot(lightDir, normalize(vNormal)));
-    color += diffuse * lights[i].color;
-  }
-  gl_FragColor = vec4(color, 1.0);
-  // gl_FragColor = vec4(vNormal, 1.0);
-  // gl_FragColor = vColor;
+// https://webgl2fundamentals.org/webgl/lessons/webgl-3d-lighting-directional.html
+vec3 directionalLighting(vec3 lightDirection, vec3 lightColor, vec3 normal) {
+  float diffuse = clamp(
+    // reverse lightDirection to get right diffuse
+    dot(normalize(-lightDirection), normal),
+    0.0, 1.0
+  );
+  return diffuse * lightColor;
 }
 
-// void main() {
-//   vec2 p = (2.0 * gl_FragCoord.xy - uResolution) / min(uResolution.x, uResolution.y);
+// varying vec4 vColor;
+varying vec3 vNormal;
+void main () {
+  // because v_normal is a varying it's interpolated
+  // so it will not be a uint vector. Normalizing it
+  // will make it a unit vector again
+  vec3 normal = normalize(vNormal);
 
-//   vec2 grid = vec2(20.0, 20.0);
-//   vec2 gridP = grid * p;
-//   float baseColor = 0.7;
-//   gl_FragColor = vec4(
-//     baseColor * vec3(
-//       sin(grid * p),
-//       sin(p.x + p.y + uTime)
-//     )
-//     + baseColor,
-//     1.0);
-// }
+  vec3 materialDiffuseColor = vec3(1.0, 1.0, 1.0);
+  vec3 color = vec3(0.0, 0.0, 0.0);
+  for (int i = 0; i < 3; ++i) {
+    color += materialDiffuseColor * directionalLighting(
+      lights[i].direction,
+      lights[i].color,
+      normal
+    );
+  }
+  gl_FragColor = vec4(color, 1.0);
+  // gl_FragColor = vec4(normal, 1.0);
+  // gl_FragColor = vColor;
+}
