@@ -28,6 +28,7 @@
       user-select: none;
       cursor: default;
       transition: all .56s cubic-bezier(0.93, 0.1, 1, 1);
+      opacity: 0;
     }
     .author:hover {background-color: #000; filter: blur(0em);}
     .author p span {font: 0.9em lighter Arial Narrow, Tahoma;
@@ -48,13 +49,36 @@
       background: linear-gradient(to bottom, rgba(0, 0, 0, 0.0) 50%, #fff 50%) repeat-x 0 .96em;
       background-size: .2em .2em;
     }
+
+    #replay {
+      width: 10vw;
+      height: 10vw;
+      position: absolute;
+      top: 2em;
+      right: 2em;
+      z-index: 2;
+      border: none;
+      border-radius: 5vw;
+      background: url(./replay.png) no-repeat;
+      background-size: 10vw 10vw;
+      cursor:pointer;
+      display: none;
+      opacity: 0;
+      transition: box-shadow 2s cubic-bezier(.25,.8,.25,1)
+    }
+    #replay:focus {outline: none;}
+    #replay:hover {
+      box-shadow: 2vw 2vw 10px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    }
   </style>
 </head>
 <body>
+  <button id="replay"></button>
   <footer class="fancy-underline author">
     <span>Impossible Window</span>
     <p><span>by </span><a href="https://twitter.com/ray7551" target="_blank">ray7551</a></p>
   </footer>
+  <script src="./TweenMax.min.js"></script>
   <script src="bundle.js"></script>
 </body>
 </html>

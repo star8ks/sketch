@@ -37,9 +37,9 @@ class Mesh {
 
       uniforms: {
         model: _this.modelMatrix,
-        inverseTransposeModel: ({viewportWidth, viewportHeight}) => {
+        inverseTransposeModel: ({viewportWidth, viewportHeight}, props) => {
           return mat4.transpose([], mat4.invert(
-            [], _this.modelMatrix({viewportWidth, viewportHeight})
+            [], _this.modelMatrix({viewportWidth, viewportHeight}, props)
           ));
         },
         view: ({tick}) => {
@@ -82,16 +82,10 @@ class Mesh {
         'lights[0].direction': [-1, 0, 0],
         // 'lights[0].direction': ({tick}) => [10 * (1+Math.sin(tick*0.01)), 10 * Math.cos(tick*0.01), 0],
         'lights[1].direction': ({ tick }, props) => {
-          if (props.gameEnd) {
-            // todo: move to animation
-            return [0, -1, 0];
-          } else {
-            return [-10 * Math.sin(tick * 0.02), 10, 0];
-          }
+          return props.light2;
         },
         'lights[2].direction': ({ tick }, props) => {
           if (props.gameEnd) {
-            // todo: move to animation
             return [0, 0, -1];//[0, 0, 10];
           } else {
             return [0, 0, -1];
@@ -101,11 +95,11 @@ class Mesh {
     });
   }
 
-  modelMatrix({ viewportWidth, viewportHeight }) {
+  modelMatrix({viewportWidth, viewportHeight}, props) {
     // fit to screen size
     // const modelSize = 1200;
     // const scale = 0.3 * Math.min(viewportWidth, viewportHeight) / window.devicePixelRatio / modelSize;
-    const scale = 1;
+    const scale = props.scale;
     const modelMat = mat4.scale([], this.matrix, [scale, scale, scale]);
     // const c = _this.center;
     // modelMat[12] = -c[0];
