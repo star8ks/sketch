@@ -118,7 +118,7 @@ fetch('oscar1.obj')
   function enableClick() {
     // TODO: caster mouse ray to intersect with cubeMesh to trigger timeline.play
     bindOnce(canvas, 'click', () => {
-      timeline.play().timeScale(10);
+      timeline.play().timeScale(1);
     }, false);
   }
   enableClick();
