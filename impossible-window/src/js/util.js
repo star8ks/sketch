@@ -2,6 +2,10 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function normalRGB(r, g, b) {
+  return [r / 255, g / 255, b / 255];
+}
+
 function transformPoint(matrix4, vector3) {
 
 }
@@ -71,20 +75,21 @@ function unbind(selector, events, handler) {
 
 function bindOnce(selector, event, handler) {
   bind(selector, event, function _handler(e) {
-    handler(e);
-    unbind(selector, event, _handler);
+    if(handler(e) !== false) {
+      unbind(selector, event, _handler);
+    }
   });
 }
 
 const util = {
   DEG2RAD: Math.PI / 180,
   RAD2DEG: 180 / Math.PI,
-  clamp,
+  clamp, normalRGB,
   bind, bindOnce, delegate, delegateOnce
 };
 
 export default util;
 export {
-  clamp,
+  clamp, normalRGB,
   bind, bindOnce, delegate, delegateOnce
 }

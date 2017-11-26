@@ -2,19 +2,22 @@
 // WebGL context, and then uses this context to initialize a new REGL instance
 const regl = require('regl')();
 const mat4 = require('gl-mat4');
-// import TweenMax from 'gsap/TweenMax.js';
+
+import { TweenMax, Linear, TimelineMax } from 'gsap';
 import Pointer from './Pointer';
 import {bind, bindOnce} from './util';
 import Mesh from './Mesh';
-import ObjLoader from './ObjLoader';
+import ModelLoader from './ModelLoader';
 import Anime from './Anime';
 import tilt3D from './titl3D';
-import { TweenMax, Linear, TimelineMax } from 'gsap';
+import RayCaster from './RayCaster';
+import drawScope from './drawScope';
 // import { TweenMax, TimelineMax } from 'gsap';
 
 const DEV = false;
 const gl = regl._gl;
 const canvas = regl._gl.canvas;
+const scope = drawScope(regl);
 const pointer = new Pointer(canvas);
 
 const sound = {
@@ -22,45 +25,40 @@ const sound = {
   yes: new Audio('./sound/245314__bwsmithatl__production-sounder-button-zipper-usage.wav')
 };
 
-fetch('oscar1.obj')
-.then(response => response.text())
-.then(text => {
-  // const objs = text.replace(/\n+^$\n/mg, '\n') // remove empty lines
-  //   .concat('\n') // add tail new line to make match below esier
-  //   .match(/^o(.|\n)*?(?=(^o|\n^$))/mg);
 
-  const infos = ObjLoader.parseObjText(text);
+class ReplayBtn {
+  constructor(el) {
+    this.el = el;
+    bind(el, ['mousedown', 'mouseout', 'touchend'], function () {
+      new TweenMax(this, 1, {
+        textShadow: "0px 0px 0px rgba(0,0,0,0)"
+      });
+    });
+    bind(el, ['mouseout', 'touchend'], function () {
+      new TweenMax(this, 1, {
+        opacity: 0.6
+      });
+    });
+    bind(el, ['mouseover', 'touchstart'], function () {
+      new TweenMax(this, .5, {
+        opacity: 0.9,
+        textShadow: "-1vh 1vh 1px rgba(168, 2, 40, 0.5)",
+        ease: Linear.easeInOut
+      });
+    });
+  }
 
-  let models = infos.map(info => {
-    const model = {
-      positions: [],
-      normals: [],
-      cells: [],
-      matrix: mat4.identity([]),
-      name: info.name
-    };
+  onClick(handler) {
+    bind(this.el, 'click', handler, false);
+  }
+}
 
-    const {vert, norm, index} = info;
-    for(let i=0; i<vert.length; i+=3) {
-      model.positions.push([vert[i], vert[i+1], vert[i+2]]);
-    }
-    for(let i=0; i<norm.length; i+=3) {
-      model.normals.push([norm[i], norm[i+1], norm[i+2]]);
-    }
-    for(let i=0; i<index.length; i+=3) {
-      model.cells.push([index[i], index[i+1], index[i+2]]);
-    }
-    return model;
-  });
-  return models;
-}, e => {
-  alert('Model loading failed!');
-  console.error(e);
-})
+
+ModelLoader.loadObj('oscar1.obj')
 .then(models => {
   const meshes = models.map(model => new Mesh(regl, model));
   // console.log(meshes);
-  const cubeMesh = meshes[meshes.findIndex(mesh => mesh.name === 'cube')];
+  const cubeMesh = meshes[meshes.findIndex(mesh => mesh.name === 'cube')] || meshes[0];
   console.log(cubeMesh);
 
   // find all vertex on cube bottom plane
@@ -110,41 +108,37 @@ fetch('oscar1.obj')
     .add('scaleUp', '-=1')
     .add('showControls')
     .to(status, 0.8, {scale: end.scale}, 'scaleUp')
-    .to('.author', 0.8, { opacity: 1 }, '-=1')
+    .to('.author', 0.8, { display: 'block', opacity: 1 }, '-=1')
     .add(() => status.gamePhase = 'end')
     .to('#replay', 0.8, { top: '.4em' })
     .eventCallback("onReverseComplete", enableClick);
 
+
+  const rayCaster = new RayCaster(gl);
   function enableClick() {
     // TODO: caster mouse ray to intersect with cubeMesh to trigger timeline.play
-    bindOnce(canvas, 'click', () => {
-      timeline.play().timeScale(1);
-    }, false);
+    bindOnce(canvas, 'click', e => {
+      const invViewProjection = mat4.invert([], mat4.multiply([], scope.projectionMatrix, scope.viewMatrix));
+      rayCaster.setFromOrthographicCamera(e, {
+        projectionMatrix: scope.projectionMatrix,
+        viewMatrix: scope.viewMatrix,
+        near: scope.near,
+        far: scope.far
+      });
+      if(!rayCaster.intersectMesh(cubeMesh)) {
+        return false; // return false so intersect test wil be triggered again
+      } else {
+        timeline.play().timeScale(10);
+      }
+    });
   }
   enableClick();
 
-  bind('#replay', ['mousedown', 'mouseout', 'touchend'], function () {
-    new TweenMax(this, 1, {
-      textShadow: "0px 0px 0px rgba(0,0,0,0)"
-    });
-  });
-  bind('#replay', ['mouseout', 'touchend'], function () {
-    new TweenMax(this, 1, {
-      opacity: 0.6
-    });
-  });
-  bind('#replay', ['mouseover', 'touchstart'], function () {
-    new TweenMax(this, .5, {
-      opacity: 0.9,
-      textShadow: "-1vh 1vh 1px rgba(168, 2, 40, 0.5)",
-      ease: Linear.easeInOut
-    });
-  });
-
-  bind('#replay', 'click', () => {
+  const replay = new ReplayBtn(document.getElementById('replay'));
+  replay.onClick(() => {
     timeline.reverse().timeScale(2.4);
     sound.flashback.play();
-  }, false);
+  });
 
 
   const anime = new Anime(dt => {
@@ -168,9 +162,12 @@ fetch('oscar1.obj')
       vert[1] = status.vertY;
     });
 
-    for(let mesh of meshes) {
-      mesh.draw(status);
-    }
+
+    scope.global(status, () => {
+      for(let mesh of meshes) {
+        scope.mesh(() => mesh.draw(status));
+      }
+    });
 
     // if(anime.frameCount > 200) anime.pause();
   });
