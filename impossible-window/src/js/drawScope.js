@@ -16,7 +16,7 @@ const drawScope = function (regl) {
       // [1, 1+Math.sin(tick*0.04), 1],
       // why 1.41 is the magic number? square root of 2?
       // it seems blender's ortho camera's default value
-      [1, 1.41, 1],
+      [1, 1.4142, 1],
       [0, 0.0, 0],
       [0, 1, 0]
     ),
@@ -33,21 +33,22 @@ const drawScope = function (regl) {
         view: () => scope.viewMatrix,
         projection: ({ viewportWidth, viewportHeight }) => {
           const scale = .52; // 0.5 => 0.4
-          const adjustAspect = 1.3;//1.3;
+          const adjustAspect = 1.4142;//1.3;
           const aspect = viewportWidth / viewportHeight * adjustAspect / scale;
           // return mat4.perspective([], 30, aspect, 0.1, 100);
 
           // aspect make resizing not change realtive size of rendered picture
           // and horizontal resizing not change the rendered size
-          // scope.projectionMatrix = mat4.multiply(
-          //   [],
-          //   mat4.scale([], mat4.identity([]), [scale, scale, scale]),
-          //   mat4.ortho([],
-          //     -aspect, aspect, -1 / scale, 1 / scale,
-          //     0.01,
-          //     1000
-          //   )
-          // );
+          scope.projectionMatrix = mat4.multiply(
+            [],
+            mat4.scale([], mat4.identity([]), [scale, scale, scale]),
+            mat4.ortho(
+              [],
+              -aspect, aspect, -1 / scale, 1 / scale,
+              scope.near,
+              scope.far
+            )
+          );
 
           // scope.projectionMatrix = mat4.perspective([], 90, aspect, 0.01, 1000);
           // mat4.perspective(scope.projectionMatrix,
@@ -55,29 +56,7 @@ const drawScope = function (regl) {
           //   viewportWidth / viewportHeight,
           //   0.01,
           //   1000);
-
-          // const frustumSize = 100;
-          // OrthographicCamera( frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000 )
-          // scope.projectionMatrix = mat4.ortho(
-          //   [],
-          //   0,
-          //   viewportWidth,
-          //   // 0,
-          //   -viewportHeight,
-          //   0,
-          //   .1, 1000
-          // );
-          scope.projectionMatrix = mat4.multiply(
-            [],
-            mat4.scale([], mat4.identity([]), [scale, scale, scale]),
-            mat4.ortho(
-              [],
-              // -frustumSize * aspect / 2, frustumSize * aspect / 2, -frustumSize / 2, frustumSize / 2,
-              -aspect, aspect, -1 / scale, 1 / scale,
-              scope.near,
-              scope.far
-            )
-          );
+          
           return scope.projectionMatrix;
         },
 

@@ -40,8 +40,11 @@ class Pointer {
 
   updatePosition(clientX, clientY) {
     let size = Math.min(this.dom.clientWidth, this.dom.clientHeight);
+    let {x: oldX, y: oldY} = this.position;
     this.position.x = (clientX * 2 - this.dom.clientWidth) / size;
     this.position.y = ((this.dom.clientHeight - clientY) * 2 - this.dom.clientHeight) / size;
+    this.dx = (this.position.x - oldX) * size;
+    this.dy = (this.position.y - oldY) * size;
   }
 
   onMove(e) {

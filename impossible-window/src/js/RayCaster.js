@@ -1,5 +1,6 @@
 const mat4 = require('gl-mat4');
 const vec3 = require('gl-vec3');
+import {transformDirection} from './util';
 
 /**
  * fork from
@@ -210,20 +211,9 @@ class RayCaster {
 
     // This is a transform from eye space to world space, for orthographic projection,
     // mouse ray direction is always [0, 0, -1]
-    this.rayDir = transformDirection([0, 0, -1], mat4.invert([], viewMatrix));
+    this.rayDir = vec3.normalize([], transformDirection([0, 0, -1], mat4.invert([], viewMatrix)));
   }
 
-}
-
-
-function transformDirection(vector, matrix) {
-  var x = vector[0], y = vector[1], z = vector[2];
-
-  return vec3.normalize([], [
-    matrix[0] * x + matrix[4] * y + matrix[8] * z,
-    matrix[1] * x + matrix[5] * y + matrix[9] * z,
-    matrix[2] * x + matrix[6] * y + matrix[10] * z
-  ]);
 }
 
 export default RayCaster;

@@ -6,8 +6,14 @@ function normalRGB(r, g, b) {
   return [r / 255, g / 255, b / 255];
 }
 
-function transformPoint(matrix4, vector3) {
+function transformDirection(vector, matrix) {
+  var x = vector[0], y = vector[1], z = vector[2];
 
+  return [
+    matrix[0] * x + matrix[4] * y + matrix[8] * z,
+    matrix[1] * x + matrix[5] * y + matrix[9] * z,
+    matrix[2] * x + matrix[6] * y + matrix[10] * z
+  ];
 }
 
 function delegate(events, className, handler) {
@@ -84,12 +90,12 @@ function bindOnce(selector, event, handler) {
 const util = {
   DEG2RAD: Math.PI / 180,
   RAD2DEG: 180 / Math.PI,
-  clamp, normalRGB,
+  clamp, transformDirection, normalRGB,
   bind, bindOnce, delegate, delegateOnce
 };
 
 export default util;
 export {
-  clamp, normalRGB,
+  clamp, transformDirection, normalRGB,
   bind, bindOnce, delegate, delegateOnce
 }

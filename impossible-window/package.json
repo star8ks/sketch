@@ -1,7 +1,7 @@
 {
-  "name": "regl-example",
+  "name": "impossible-window",
   "version": "1.0.0",
-  "description": "a simple example of regl",
+  "description": "A WebGL interactive sky window. A tribute to Oscar Reutersvärd.",
   "main": "index.js",
   "license": "MIT",
   "author": {

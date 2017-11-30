@@ -5,6 +5,7 @@ const mat4 = require('gl-mat4');
 
 import { TweenMax, Linear, TimelineMax } from 'gsap';
 import Pointer from './Pointer';
+import Vector2 from './Vector2';
 import { ReplayBtn } from './UI';
 import { bindOnce } from './util';
 import Mesh from './Mesh';
@@ -28,8 +29,6 @@ const sound = {
 
 
 
-
-
 ModelLoader.loadObj('oscar1.obj')
 .then(models => {
   let cubeMesh;
@@ -42,8 +41,53 @@ ModelLoader.loadObj('oscar1.obj')
       return new Mesh(regl, model);
     }
   });
-  // console.log(meshes);
   console.log(cubeMesh);
+
+
+  // TODO: move drag related code to UI.js->dragable(mesh)
+  const rayCaster = new RayCaster(gl, scope.near, scope.far);
+  let dragStartPosition;
+  pointer.addDownListener((e) => {
+    const invViewProjection = mat4.invert([], mat4.multiply([], scope.projectionMatrix, scope.viewMatrix));
+    rayCaster.setFromOrthographicCamera(e, {
+      projectionMatrix: scope.projectionMatrix,
+      viewMatrix: scope.viewMatrix,
+      near: scope.near,
+      far: scope.far
+    });
+
+    if (rayCaster.intersectMesh(cubeMesh)) {
+      dragStartPosition = pointer.position.clone();
+      // TODO: highlight cubeMesh
+    }
+  });
+
+  pointer.addUpListener(() => {
+    dragStartPosition = undefined;
+  });
+
+  pointer.addMoveListener((e) => {
+    if(!dragStartPosition) return;
+    // TODO: if drag end but not success, animate to init bottomY
+    // todo: caculate dx,dy with proper time interval
+    const {dx, dy} = pointer;
+
+    const needFixBottomY = cubeMesh.drag(
+      new Vector2().subVectors(pointer.position, dragStartPosition),
+      scope.projectionMatrix,
+      scope.viewMatrix);
+    if(needFixBottomY) {
+      // TODO: disable highlight cubeMesh
+      // animate to cubeMesh.end.bottomY
+      TweenMax.to(cubeMesh, 1, {
+        bottomY: cubeMesh.end.bottomY
+      });
+
+      TweenMax.to(scope.light1Direction, 2, scope.end.light1Direction);
+
+      timeline.success.play();
+    }
+  });
 
   TweenLite.defaultEase = Expo.easeIn;
   // tween status
@@ -65,50 +109,40 @@ ModelLoader.loadObj('oscar1.obj')
   });
 
   // animation after click on cube
-  const timeline = new TimelineMax({ paused: true })
-    .add(() => status.gamePhase = 'playing')
-    .add([
-      TweenMax.to(cubeMesh, 2, {bottomY: cubeMesh.end.bottomY}),
-      TweenMax.to(scope.light1Direction, 3, scope.end.light1Direction)
-    ])
-    .add(() => {
-      if(!timeline.reversed()) sound.yes.play();
-    }, '-=1.04')
-    .add('scaleUp', '-=1')
-    .add('showControls')
-    .to(scope, 0.8, {
-      viewScale: scope.end.viewScale
-    }, 'scaleUp')
-    .to('.author', 0.8, { display: 'block', opacity: 1 }, '-=1')
-    .add(() => status.gamePhase = 'end')
-    .to('#replay', 0.8, { top: '.4em' })
-    .eventCallback("onReverseComplete", enableClick);
+  const timeline = {
+    reversePlaying: new TimelineMax({ paused: true })
+      .add([
+        TweenMax.to(status, 2, {gamePhase: 'start'}),
+        TweenMax.to(cubeMesh, 1, {
+          bottomY: cubeMesh.initBottomY
+        })
+      ]),
+    success: new TimelineMax({ paused: true })
+      .add(() => status.gamePhase = 'success')
+      .add(TweenMax.to(scope.light1Direction, 2, scope.end.light1Direction))
+      .add(() => {
+        if(!timeline.success.reversed()) sound.yes.play();
+      }, '+=1')
+      .add('scaleUp', '-=1')
+      .add('showControls')
+      .to(scope, 0.8, {
+        viewScale: scope.end.viewScale
+      }, 'scaleUp')
+      .to('.author', 0.8, { display: 'block', opacity: 1 }, '-=1')
+      .add(() => status.gamePhase = 'end')
+      .to('#replay', 0.8, { top: '.4em' })
+      .eventCallback("onReverseComplete", () => {
+        status.gamePhase = 'start';
+      })
+  }
 
   const replayBtn = new ReplayBtn(document.getElementById('replay'));
   replayBtn.onClick(() => {
-    timeline.reverse().timeScale(2.4);
+    timeline.success.reverse().timeScale(2.4);
+    timeline.reversePlaying.play();
     sound.flashback.play();
+    cubeMesh.enableDrag = true;
   });
-
-  const rayCaster = new RayCaster(gl, scope.near, scope.far);
-  function enableClick() {
-    bindOnce(canvas, 'click', e => {
-      const invViewProjection = mat4.invert([], mat4.multiply([], scope.projectionMatrix, scope.viewMatrix));
-      rayCaster.setFromOrthographicCamera(e, {
-        projectionMatrix: scope.projectionMatrix,
-        viewMatrix: scope.viewMatrix,
-        near: scope.near,
-        far: scope.far
-      });
-
-      if(!rayCaster.intersectMesh(cubeMesh)) {
-        return false; // return false so intersect test wil be triggered again
-      } else {
-        timeline.play().timeScale(1.5);
-      }
-    });
-  }
-  enableClick();
 
 
   const anime = new AnimeLoop(dt => {
