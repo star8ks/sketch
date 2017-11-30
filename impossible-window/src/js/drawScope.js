@@ -7,8 +7,12 @@ import { normalRGB } from './util';
  */
 const drawScope = function (regl) {
   const scope = {
-    // viewMatrix: new Float32Array([1, -0, 0, 0, 0, 0.876966655254364, 0.48055124282836914, 0, -0, -0.48055124282836914, 0.876966655254364, 0, 0, 0, -11.622776985168457, 1]), // for test
-    viewMatrix: mat4.lookAt([],
+    // end status of property animation
+    end: {
+      light1Direction: [0, -1, 0],
+      viewScale: 1
+    },
+    initViewMatrix: mat4.lookAt([],
       // [1, 1+Math.sin(tick*0.04), 1],
       // why 1.41 is the magic number? square root of 2?
       // it seems blender's ortho camera's default value
@@ -16,16 +20,19 @@ const drawScope = function (regl) {
       [0, 0.0, 0],
       [0, 1, 0]
     ),
+    // viewMatrix: new Float32Array([1, -0, 0, 0, 0, 0.876966655254364, 0.48055124282836914, 0, -0, -0.48055124282836914, 0.876966655254364, 0, 0, 0, -11.622776985168457, 1]), // for test
     projectionMatrix: new Float32Array(16),
-    near: 0.01,
-    far: 1000,
+    near: 0.1,
+    far: 100,
+    viewScale: 0.8,
+    light1Direction: [1, -0.3, 1],
 
     // keeps track of all global state.
     global: regl({
       uniforms: {
         view: () => scope.viewMatrix,
         projection: ({ viewportWidth, viewportHeight }) => {
-          const scale = .5; // 0.5 => 0.4
+          const scale = .52; // 0.5 => 0.4
           const adjustAspect = 1.3;//1.3;
           const aspect = viewportWidth / viewportHeight * adjustAspect / scale;
           // return mat4.perspective([], 30, aspect, 0.1, 100);
@@ -83,9 +90,7 @@ const drawScope = function (regl) {
         // 'lights[2].color': [0, 0, 1],
         'lights[0].direction': [-1, 0, 0],
         // 'lights[0].direction': ({tick}) => [10 * (1+Math.sin(tick*0.01)), 10 * Math.cos(tick*0.01), 0],
-        'lights[1].direction': ({ tick }, props) => {
-          return props.light2;
-        },
+        'lights[1].direction': () => scope.light1Direction,
         'lights[2].direction': [0, 0, -1],
       }
     }),
@@ -97,6 +102,12 @@ const drawScope = function (regl) {
       vert: glslify('../glsl/vert.glsl'),
     })
   };
+
+  Object.defineProperty(scope, 'viewMatrix', {
+    get: function() {
+      return mat4.scale([], this.initViewMatrix, [this.viewScale, this.viewScale, this.viewScale]);
+    }
+  });
 
   return scope;
 };

@@ -7,7 +7,7 @@ class Mesh {
     this.positions = positions;
     this.elements = cells;
     this.normals = normals;
-    this.matrix = matrix; // model matrix
+    this.matrix = mat4.clone(matrix); // model matrix
     this.highlight = 1.0;
 
     let _this = this;
@@ -28,26 +28,16 @@ class Mesh {
       // count: 36,
 
       uniforms: {
-        model: _this.matrix,
-        inverseTransposeModel: ({viewportWidth, viewportHeight}, props) => {
+        model: () => this.matrix,
+        inverseTransposeModel: ({viewportWidth, viewportHeight}) => {
           return mat4.transpose([], mat4.invert(
             [], _this.matrix
           ));
         },
-        uHighlight: this.highlight
+        uHighlight: () => _this.highlight
       }
     });
 
-    // function modelMatrix({viewportWidth, viewportHeight}, props) {
-    //   // TODO: fit to screen shorter side
-    //   const scale = props.scale;
-    //   const modelMat = mat4.scale([], _this.matrix, [scale, scale, scale]);
-    //   // const c = _this.center;
-    //   // modelMat[12] = -c[0];
-    //   // modelMat[13] = -c[1];
-    //   // modelMat[14] = -c[2];
-    //   return modelMat;
-    // }
   }
 
 }

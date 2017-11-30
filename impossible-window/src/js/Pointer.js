@@ -1,4 +1,4 @@
-import {Vector2} from './Vector2';
+import Vector2 from './Vector2';
 import {clamp} from './util';
 
 class Pointer {
@@ -115,7 +115,7 @@ class Pointer {
     if (e instanceof MouseEvent && e.button !== Pointer.BUTTON.MOUSE_LEFT) {
       return;
     }
-    
+
     this.isPressing = false;
     let intervalID = setInterval(() => {
       if (this.isPressing || !this.setPressure(this.pressure - this.deltaPressure)) {

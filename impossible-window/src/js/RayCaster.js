@@ -7,14 +7,19 @@ const vec3 = require('gl-vec3');
  * https://github.com/greggman/webgl-fundamentals/blob/master/webgl/lessons/resources/dot-product.html
  * see:
  * http://antongerdelan.net/opengl/raycasting.html
+ * https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/definition-ray
+ * https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
+ *
  * https://github.com/regl-project/regl/blob/gh-pages/example/raycast.js
  * https://github.com/sketchpunk/FunWithWebGL2/tree/master/lesson_039
  */
 class RayCaster {
-  constructor(gl) {
+  constructor(gl, near, far) {
     this.gl = gl;
+    this.near = near || 0;
+    this.far = far || Infinity;
 
-    // ray point and ray direction in world space
+    // ray origin point and ray direction in world space
     // this.rayPoint = rayPoint;
     // this.rayDir = rayDir;
     // console.log(rayDir);
@@ -41,7 +46,7 @@ class RayCaster {
    * @return {Boolean}
    */
   intersectMesh(mesh) {
-    console.log('ray: ', this.rayPoint, this.rayDir);
+    console.log('ray: ', this.rayOrigin, this.rayDir);
     // this.rayPoint[2] = 100;
     for (let j = 0; j < mesh.elements.length; j++) {
       const f = mesh.elements[j];
@@ -58,8 +63,8 @@ class RayCaster {
       // console.log('tri', tri);
 
       const t = this.intersectTriangle(tri);
-      if(t !== null) {
-        console.log(this.rayDir, this.rayPoint);
+      if(t !== null && t >= this.near && t <= this.far) {
+        console.log(this.rayDir, this.rayOrigin);
         console.log([
           vec3.transformMat4([], mesh.positions[f[0]], mesh.matrix),
           vec3.transformMat4([], mesh.positions[f[1]], mesh.matrix),
@@ -76,9 +81,16 @@ class RayCaster {
   /**
    * Below is a slightly modified version of this code:
    * https://github.com/substack/ray-triangle-intersection
+   * Calculate the intersection of a ray and a triangle in three dimensions
+   * using the Möller-Trumbore intersection algorithm with culling enabled
+   *
    * It does intersection between ray and triangle.
    * With the original version, we had no way of accessing 't'
    * But we really needed that value.
+   *
+   * @param {vec3[3]} tri
+   * @param {vec3} out
+   * @return {Number|null}
    */
   intersectTriangle(tri, out=[]) {
     const EPSILON = 0.000001;
@@ -94,9 +106,9 @@ class RayCaster {
     vec3.cross(pvec, this.rayDir, edge2);
     let det = vec3.dot(edge1, pvec);
     if(det > 0) {
-      vec3.subtract(tvec, this.rayPoint, tri[0]);
+      vec3.subtract(tvec, this.rayOrigin, tri[0]);
     } else {
-      vec3.subtract(tvec, tri[0], this.rayPoint);
+      vec3.subtract(tvec, tri[0], this.rayOrigin);
       det *= -1;
     }
     if (det < EPSILON && det > -EPSILON) return null;
@@ -115,9 +127,9 @@ class RayCaster {
     console.log(vec3.dot(edge2, qvec), det);
 
     if(t > EPSILON) {
-      out[0] = this.rayPoint[0] + t * this.rayDir[0];
-      out[1] = this.rayPoint[1] + t * this.rayDir[1];
-      out[2] = this.rayPoint[2] + t * this.rayDir[2];
+      out[0] = this.rayOrigin[0] + t * this.rayDir[0];
+      out[1] = this.rayOrigin[1] + t * this.rayDir[1];
+      out[2] = this.rayOrigin[2] + t * this.rayDir[2];
       return t;
     } else {
       return false;
@@ -145,26 +157,6 @@ class RayCaster {
     ];
   }
 
-
-  /**
-   * set ray from orthographic camera and mouse position
-   * @param {MouseEvent} event
-   */
-  setFromOrthographicCamera(event, { projectionMatrix, viewMatrix, near, far}) {
-    // if ((camera && camera.isPerspectiveCamera)) {
-    //   this.ray.origin.setFromMatrixPosition(camera.matrixWorld);
-    //   this.ray.direction.set(coords.x, coords.y, 0.5).unproject(camera).sub(this.ray.origin).normalize();
-    // }
-
-    const pos = RayCaster.getRelativeMousePosition(event);
-    // 3d Normalised Device Coordinates
-    const normalCoord = this.getNormalCoord(pos);
-
-    const inverseViewProjection = mat4.invert([], mat4.multiply([], projectionMatrix, viewMatrix));
-    this.rayPoint = vec3.transformMat4([], [...normalCoord, (near + far) / (near - far)], inverseViewProjection); // set origin in plane of camera
-    this.rayDir = transformDirection([0, 0, - 1], mat4.invert([], viewMatrix));
-  }
-
   /**
    * set ray from perspective camera and mouse position
    * @param {MouseEvent} event
@@ -181,21 +173,44 @@ class RayCaster {
     // const clipCoord = [...normalCoord, -1, 1];
     console.log('4d Homogeneous Clip Coordinates: ', [...normalCoord, -1, 1]);
 
-    // 4d eye coordinates (Camera as origin) = inverseProjectionMatrix * homogeneous clip coord
+    // 4d eye space coordinates (Camera as origin) = inverseProjectionMatrix * homogeneous clip coord
     // 4d world space coordinates = inverseViewMatrix * eye coord
     //  = inverseViewProjectionMatrix * homogeneous clip coord
-    this.rayPoint = vec3.transformMat4([], [...normalCoord, 0.0], inverseViewProjection);
+    // Why [...normalCoord, 0.5] ? See http://barkofthebyte.azurewebsites.net/post/2014/05/05/three-js-projecting-mouse-clicks-to-a-3d-scene-how-to-do-it-and-how-it-works
+    this.rayOrigin = vec3.transformMat4([], [...normalCoord, 0.5], inverseViewProjection);
 
     // camera position in world space
     const cameraPosition = vec3.transformMat4([], [0, 0, 0], mat4.invert([], viewMatrix));
 
     // ray direction vector in world space
-    this.rayDir = vec3.normalize([], vec3.subtract([], this.rayPoint, cameraPosition));
+    // ray direction = ray origin point - camera position
+    this.rayDir = vec3.normalize([], vec3.subtract([], this.rayOrigin, cameraPosition));
 
     // const near = vec3.transformMat4([], [...normalCoord, -1], inverseViewProjection);
     // const far = vec3.transformMat4([], [...normalCoord,  1], inverseViewProjection);
     // console.log({near, far});
     // const ray = vec3.normalize([], vec3.subtract([], far, near));
+  }
+
+  /**
+   * set ray from orthographic camera and mouse position
+   * adapt from: https://github.com/mrdoob/three.js/blob/r88/src/core/Raycaster.js#L83
+   * Currently I cannot completely understand why but it works.
+   * @param {MouseEvent} event
+   */
+  setFromOrthographicCamera(event, { projectionMatrix, viewMatrix, near, far }) {
+    const pos = RayCaster.getRelativeMousePosition(event);
+    // 3d Normalised Device Coordinates
+    const normalCoord = this.getNormalCoord(pos);
+
+    const inverseViewProjection = mat4.invert([], mat4.multiply([], projectionMatrix, viewMatrix));
+    // Why ray origin point is not -1(near clipping plane), but ] ?
+    // (near + far) / (near - far) is about -0.9
+    this.rayOrigin = vec3.transformMat4([], [...normalCoord, (near + far) / (near - far)], inverseViewProjection); // set origin in plane of camera
+
+    // This is a transform from eye space to world space, for orthographic projection,
+    // mouse ray direction is always [0, 0, -1]
+    this.rayDir = transformDirection([0, 0, -1], mat4.invert([], viewMatrix));
   }
 
 }

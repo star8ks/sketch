@@ -5,14 +5,15 @@ const mat4 = require('gl-mat4');
 
 import { TweenMax, Linear, TimelineMax } from 'gsap';
 import Pointer from './Pointer';
-import {bind, bindOnce} from './util';
+import { ReplayBtn } from './UI';
+import { bindOnce } from './util';
 import Mesh from './Mesh';
+import DraggableMesh from './DraggableMesh';
 import ModelLoader from './ModelLoader';
-import Anime from './Anime';
+import AnimeLoop from './AnimeLoop';
 import tilt3D from './titl3D';
 import RayCaster from './RayCaster';
 import drawScope from './drawScope';
-// import { TweenMax, TimelineMax } from 'gsap';
 
 const DEV = false;
 const gl = regl._gl;
@@ -26,70 +27,38 @@ const sound = {
 };
 
 
-class ReplayBtn {
-  constructor(el) {
-    this.el = el;
-    bind(el, ['mousedown', 'mouseout', 'touchend'], function () {
-      new TweenMax(this, 1, {
-        textShadow: "0px 0px 0px rgba(0,0,0,0)"
-      });
-    });
-    bind(el, ['mouseout', 'touchend'], function () {
-      new TweenMax(this, 1, {
-        opacity: 0.6
-      });
-    });
-    bind(el, ['mouseover', 'touchstart'], function () {
-      new TweenMax(this, .5, {
-        opacity: 0.9,
-        textShadow: "-1vh 1vh 1px rgba(168, 2, 40, 0.5)",
-        ease: Linear.easeInOut
-      });
-    });
-  }
 
-  onClick(handler) {
-    bind(this.el, 'click', handler, false);
-  }
-}
 
 
 ModelLoader.loadObj('oscar1.obj')
 .then(models => {
-  const meshes = models.map(model => new Mesh(regl, model));
-  // console.log(meshes);
-  const cubeMesh = meshes[meshes.findIndex(mesh => mesh.name === 'cube')] || meshes[0];
-  console.log(cubeMesh);
-
-  // find all vertex on cube bottom plane
-  // if normal.y is -1, the vertex is on bottom face
-  const bottomIndex = cubeMesh.normals
-      .findIndex(normal => Math.abs(normal[1] + 1) < 0.01);
-  const bottomVert = cubeMesh.positions[bottomIndex];
-  const bottomVertY = bottomVert[1];
-  const bottomVerts = [];
-  cubeMesh.positions.forEach((position, index) => {
-    if (Math.abs(position[1] - bottomVert[1]) < 0.01) {
-      bottomVerts.push(position);
+  let cubeMesh;
+  const magicY = -2.46;
+  const meshes = models.map(model => {
+    if(model.name === 'cube') {
+      cubeMesh = new DraggableMesh({endBottomY: magicY}, regl, model);
+      return cubeMesh;
+    }else {
+      return new Mesh(regl, model);
     }
   });
+  // console.log(meshes);
+  console.log(cubeMesh);
 
-  // tween status
   TweenLite.defaultEase = Expo.easeIn;
-  const magicY = -2.46;
+  // tween status
   const status = {
     gamePhase: 'start',
-    vertY: bottomVertY,
-    light2: [1, -0.3, 1],
-    scale: 0.8,
     highlight: 1
   };
-  const end = {vertY: magicY, light2: [0, -1, 0], scale: 1};
 
   // console.log(TweenMax, TimelineMax)
   // cube highlight blink
   new TweenMax(status, 2, {
     highlight: 2,
+    onUpdate: () => {
+      cubeMesh.highlight = status.gamePhase === 'start' ? status.highlight : 1.0;
+    },
     ease: Linear.easeNone,
     repeat: -1, // repeat infinately
     yoyo: true  // go back and forth (forward then backward) in every repeat
@@ -99,24 +68,30 @@ ModelLoader.loadObj('oscar1.obj')
   const timeline = new TimelineMax({ paused: true })
     .add(() => status.gamePhase = 'playing')
     .add([
-      TweenMax.to(status, 2, {vertY: end.vertY}),
-      TweenMax.to(status.light2, 3, end.light2)
+      TweenMax.to(cubeMesh, 2, {bottomY: cubeMesh.end.bottomY}),
+      TweenMax.to(scope.light1Direction, 3, scope.end.light1Direction)
     ])
     .add(() => {
       if(!timeline.reversed()) sound.yes.play();
     }, '-=1.04')
     .add('scaleUp', '-=1')
     .add('showControls')
-    .to(status, 0.8, {scale: end.scale}, 'scaleUp')
+    .to(scope, 0.8, {
+      viewScale: scope.end.viewScale
+    }, 'scaleUp')
     .to('.author', 0.8, { display: 'block', opacity: 1 }, '-=1')
     .add(() => status.gamePhase = 'end')
     .to('#replay', 0.8, { top: '.4em' })
     .eventCallback("onReverseComplete", enableClick);
 
+  const replayBtn = new ReplayBtn(document.getElementById('replay'));
+  replayBtn.onClick(() => {
+    timeline.reverse().timeScale(2.4);
+    sound.flashback.play();
+  });
 
-  const rayCaster = new RayCaster(gl);
+  const rayCaster = new RayCaster(gl, scope.near, scope.far);
   function enableClick() {
-    // TODO: caster mouse ray to intersect with cubeMesh to trigger timeline.play
     bindOnce(canvas, 'click', e => {
       const invViewProjection = mat4.invert([], mat4.multiply([], scope.projectionMatrix, scope.viewMatrix));
       rayCaster.setFromOrthographicCamera(e, {
@@ -125,23 +100,18 @@ ModelLoader.loadObj('oscar1.obj')
         near: scope.near,
         far: scope.far
       });
+
       if(!rayCaster.intersectMesh(cubeMesh)) {
         return false; // return false so intersect test wil be triggered again
       } else {
-        timeline.play().timeScale(10);
+        timeline.play().timeScale(1.5);
       }
     });
   }
   enableClick();
 
-  const replay = new ReplayBtn(document.getElementById('replay'));
-  replay.onClick(() => {
-    timeline.reverse().timeScale(2.4);
-    sound.flashback.play();
-  });
 
-
-  const anime = new Anime(dt => {
+  const anime = new AnimeLoop(dt => {
     // If you are not using regl.frame() to tick your application,
     // then you should periodically call regl.poll() each frame
     // to update the timer statistics.
@@ -151,21 +121,9 @@ ModelLoader.loadObj('oscar1.obj')
       color: [1, 1, 1, 0]
     });
 
-    cubeMesh.highlight = status.gamePhase === 'start' ? status.highlight : 1.0;
-    const light2 = status.light2;
-    // console.log(light2);
-    // console.log()
-
-    bottomVerts.forEach(vert => {
-      // const nextY = vert[1] - dt * 0.001;
-      // vert[1] = nextY >= magicY ? nextY : magicY;
-      vert[1] = status.vertY;
-    });
-
-
     scope.global(status, () => {
       for(let mesh of meshes) {
-        scope.mesh(() => mesh.draw(status));
+        scope.mesh(() => mesh.draw(scope));
       }
     });
 

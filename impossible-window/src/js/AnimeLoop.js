@@ -22,7 +22,13 @@ const vis = (function () {
   }
 })();
 
-class Anime {
+/**
+ * Animation Loop
+ * Just like normal animation loop, but it
+ * ensure run time consistency and right delta time (which may affect your animation speeed),
+ * when your canvas' visiability is changing.
+ */
+class AnimeLoop {
   constructor(loop) {
     this.loop = loop;
     this._isPause = false; // is puased by this.pause()
@@ -52,14 +58,14 @@ class Anime {
     if (!this._isFocus) return;
     this._isPause = false;
 
-    this.lastTime = Anime.now();
+    this.lastTime = AnimeLoop.now();
     requestAnimationFrame(function _loop(...args) {
       // console.log('is focus: ', this._isFocus);
-      const time = Anime.now();
+      const time = AnimeLoop.now();
       let deltaTime;
       if (this._shouldFixDeltaTime) {
         // console.warn('should fix, is focus: ', this._isFocus);
-        deltaTime = Anime.fixedDeltaTime;
+        deltaTime = AnimeLoop.fixedDeltaTime;
         this._shouldFixDeltaTime = false;
       } else {
         deltaTime = time - this.lastTime;
@@ -79,12 +85,12 @@ class Anime {
     this._isPause = true;
   }
 }
-Anime.fixedDeltaTime = 20; // fixed delta time in milli sec
+AnimeLoop.fixedDeltaTime = 20; // fixed delta time in milli sec
 /**
  * return current time in millisecond
  */
-Anime.now = window.performance.now ?
+AnimeLoop.now = window.performance.now ?
   () => (performance.now() + performance.timing.navigationStart) :
   () => Date.now();
 
-export default Anime;
+export default AnimeLoop;

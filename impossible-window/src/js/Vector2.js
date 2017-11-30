@@ -478,4 +478,5 @@ Object.assign( Vector2.prototype, {
 } );
 
 
+export default Vector2;
 export { Vector2 };
