@@ -79,13 +79,12 @@ ModelLoader.loadObj('oscar1.obj')
     if(needFixBottomY) {
       // TODO: disable highlight cubeMesh
       // animate to cubeMesh.end.bottomY
-      TweenMax.to(cubeMesh, 1, {
-        bottomY: cubeMesh.end.bottomY
-      });
-
-      TweenMax.to(scope.light1Direction, 2, scope.end.light1Direction);
-
-      timeline.success.play();
+      new TimelineMax().add([
+        TweenMax.to(cubeMesh, 1, { bottomY: cubeMesh.end.bottomY }),
+        TweenMax.to(scope.light1Direction, 2, scope.end.light1Direction)
+      ])
+      .add(() => sound.yes.play(), '-=1.2')
+      .add(() => timeline.success.play());
     }
   });
 
@@ -110,19 +109,20 @@ ModelLoader.loadObj('oscar1.obj')
 
   // animation after click on cube
   const timeline = {
-    reversePlaying: new TimelineMax({ paused: true })
+    reversePlaying: () => new TimelineMax({ paused: true })
       .add([
         TweenMax.to(status, 2, {gamePhase: 'start'}),
         TweenMax.to(cubeMesh, 1, {
-          bottomY: cubeMesh.initBottomY
+          bottomY: cubeMesh.initBottomY,
+          onUpdate: () => console.log(cubeMesh.bottomY)
         })
       ]),
     success: new TimelineMax({ paused: true })
       .add(() => status.gamePhase = 'success')
       .add(TweenMax.to(scope.light1Direction, 2, scope.end.light1Direction))
-      .add(() => {
-        if(!timeline.success.reversed()) sound.yes.play();
-      }, '+=1')
+      // .add(() => {
+      //   if(!timeline.success.reversed()) sound.yes.play();
+      // }, '-=2')
       .add('scaleUp', '-=1')
       .add('showControls')
       .to(scope, 0.8, {
@@ -139,7 +139,7 @@ ModelLoader.loadObj('oscar1.obj')
   const replayBtn = new ReplayBtn(document.getElementById('replay'));
   replayBtn.onClick(() => {
     timeline.success.reverse().timeScale(2.4);
-    timeline.reversePlaying.play();
+    timeline.reversePlaying().play();
     sound.flashback.play();
     cubeMesh.enableDrag = true;
   });

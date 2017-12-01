@@ -33,7 +33,7 @@ const drawScope = function (regl) {
         view: () => scope.viewMatrix,
         projection: ({ viewportWidth, viewportHeight }) => {
           const scale = .52; // 0.5 => 0.4
-          const adjustAspect = 1.4142;//1.3;
+          const adjustAspect = 1.3;//1.4142;//
           const aspect = viewportWidth / viewportHeight * adjustAspect / scale;
           // return mat4.perspective([], 30, aspect, 0.1, 100);
 
@@ -56,7 +56,7 @@ const drawScope = function (regl) {
           //   viewportWidth / viewportHeight,
           //   0.01,
           //   1000);
-          
+
           return scope.projectionMatrix;
         },
 
