@@ -1,15 +1,21 @@
 import vec3 from 'gl-vec3';
 import mat4 from 'gl-mat4';
-import {transformDirection} from './util';
+import {transformDirection, noop} from './util';
 import Vector2 from './Vector2';
 import Mesh from './Mesh';
 
 class DraggableMesh extends Mesh {
-  constructor({endBottomY}, ...args) {
+  constructor({rayCaster, globalScope, pointer, endBottomY, error=0.1, onDragging=noop, onDragReach=noop}, ...args) {
     super(...args);
+    this.rayCaster = rayCaster;
+    this.globalScope = globalScope;
+    this.pointer = pointer;
+    this.onDragging = onDragging;
+    this.onDragReach = onDragReach; // onDragReach will executed when drag to endBottmY
     this.end = {
       bottomY: endBottomY
     };
+    this.error = error;
 
     // find all vertex on cube bottom plane
     // if normal.y is -1, the vertex is on bottom face
@@ -24,7 +30,78 @@ class DraggableMesh extends Mesh {
 
     this._bottomY = bottomVert[1];
     this.initBottomY = bottomVert[1];
+
+    this._draggable(this.globalScope);
+  }
+
+  _draggable(scope) {
+    let dragStartPosition;
+    let needFixBottomY;
+
+    this.pointer.addDownListener((e) => {
+      if (!this.enableDrag) return;
+
+      this.rayCaster.setFromOrthographicCamera(e, {
+        projectionMatrix: scope.projectionMatrix,
+        viewMatrix: scope.viewMatrix
+      });
+
+      // TODO: intersect all mesh and return the front mesh
+      if (this.rayCaster.intersectMesh(this)) {
+        dragStartPosition = this.pointer.position.clone();
+        this.disableHighlight();
+      }
+    });
+
+    this.pointer.addUpListener(() => {
+      if (!this.enableDrag) return;
+
+      if (dragStartPosition && needFixBottomY) {
+        this.disableHighlight();
+        this.enableDrag = false;
+        this.onDragReach();
+      } else {
+        this.startHighlight();
+      }
+      dragStartPosition = undefined;
+    });
+
+    this.pointer.addMoveListener((e) => {
+      if (!dragStartPosition || !this.enableDrag) return;
+      // TODO: if drag end but not success, animate to init bottomY
+      // todo: caculate dx,dy with proper time interval
+      const { dx, dy } = this.pointer;
+      this.onDragging();
+
+      needFixBottomY = this.drag(
+        new Vector2().subVectors(this.pointer.position, dragStartPosition),
+        scope.projectionMatrix,
+        scope.viewMatrix
+      );
+    });
+
     this.enableDrag = true;
+
+
+    // console.log(TweenMax, TimelineMax)
+    // cube highlight blink
+    this.highlightTween = new TweenMax(this, 2, {
+      highlight: 2,
+      ease: Linear.easeNone,
+      repeat: -1, // repeat infinately
+      // paused: true,
+      yoyo: true  // go back and forth (forward then backward) in every repeat
+    });
+  }
+
+  startHighlight() {
+    this.highlightTween.play();
+    this.enableHighlight = true;
+  }
+
+  disableHighlight() {
+    this.highlightTween.pause();
+    this.enableHighlight = false;
   }
 
   /**
@@ -57,12 +134,12 @@ class DraggableMesh extends Mesh {
       }
     });
 
+    // TODO: enable drag in x and z axis to make game more difficult
     if (maxProjAxis === 0) {
     } else if (maxProjAxis === 1) {
       // console.log(maxProj);
       this.bottomY += maxProj * 0.2;
-      if(this.bottomY - this.end.bottomY <= 0.1) {
-        this.enableDrag = false;
+      if(Math.abs(this.bottomY - this.end.bottomY) <= this.error) {
         return true;
       }
     } else if (maxProjAxis === 2) {

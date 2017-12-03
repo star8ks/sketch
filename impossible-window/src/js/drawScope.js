@@ -12,6 +12,7 @@ const drawScope = function (regl) {
       light1Direction: [0, -1, 0],
       viewScale: 1
     },
+    gamePhase: 'start',
     initViewMatrix: mat4.lookAt([],
       // [1, 1+Math.sin(tick*0.04), 1],
       // why 1.41 is the magic number? square root of 2?

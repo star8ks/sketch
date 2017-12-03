@@ -16,6 +16,42 @@ function transformDirection(vector, matrix) {
   ];
 }
 
+function noop() {}
+
+function onceLoaded(onLoad = noop) {
+  return new Promise(function (resolve) {
+    document.addEventListener('DOMContentLoaded', function () {
+      resolve(onLoad());
+    });
+  });
+}
+
+/**
+ * document.querySelector wrapper
+ * @usage
+ * let id = 'fancy poo';
+ * $`#${id}` or $(`#${id}`)
+ * */
+function $(selector, ...vars) {
+  selector = selector.raw ? selector : { raw: selector };
+  return document.querySelector(String.raw(selector, ...vars));
+}
+
+/**
+ * document.querySelectorAll wrapper
+ * @usage
+ * let class = 'fancy 💩';
+ * $all`.${class}` or $all(`.${class}`)
+ * */
+function $all(selector, ...vars) {
+  selector = selector.raw ? selector : { raw: selector };
+  return Array.prototype.slice.call(
+    document.querySelectorAll(
+      String.raw(selector, ...vars)
+    )
+  );
+}
+
 function delegate(events, className, handler) {
   if (Array.isArray(events)) {
     events.forEach(event => addListener(event))
@@ -33,6 +69,7 @@ function delegate(events, className, handler) {
     }, false);
   }
 }
+
 function delegateOnce(events, className, handler) {
   if (Array.isArray(events)) {
     events.forEach(event => addListener(event))
@@ -91,11 +128,13 @@ const util = {
   DEG2RAD: Math.PI / 180,
   RAD2DEG: 180 / Math.PI,
   clamp, transformDirection, normalRGB,
+  noop, onceLoaded, $, $all,
   bind, bindOnce, delegate, delegateOnce
 };
 
 export default util;
 export {
   clamp, transformDirection, normalRGB,
+  noop, onceLoaded, $, $all,
   bind, bindOnce, delegate, delegateOnce
 }

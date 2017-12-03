@@ -9,6 +9,7 @@ class Mesh {
     this.normals = normals;
     this.matrix = mat4.clone(matrix); // model matrix
     this.highlight = 1.0;
+    this.enableHighlight = false;
 
     let _this = this;
     this.draw = regl({
@@ -34,7 +35,7 @@ class Mesh {
             [], _this.matrix
           ));
         },
-        uHighlight: () => _this.highlight
+        uHighlight: () => _this.enableHighlight ? _this.highlight : 1.0
       }
     });
 

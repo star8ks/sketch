@@ -199,7 +199,7 @@ class RayCaster {
    * Currently I cannot completely understand why but it works.
    * @param {MouseEvent} event
    */
-  setFromOrthographicCamera(event, { projectionMatrix, viewMatrix, near, far }) {
+  setFromOrthographicCamera(event, { projectionMatrix, viewMatrix, near=this.near, far=this.far }) {
     const pos = RayCaster.getRelativeMousePosition(event);
     // 3d Normalised Device Coordinates
     const normalCoord = this.getNormalCoord(pos);
