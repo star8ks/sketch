@@ -46,9 +46,11 @@ class DraggableMesh extends Mesh {
         viewMatrix: scope.viewMatrix
       });
 
+      // TODO: intersect with this.XYPlane
       // TODO: intersect all mesh and return the front mesh
       if (this.rayCaster.intersectMesh(this)) {
         dragStartPosition = this.pointer.position.clone();
+        this.dragStartBottomY = this._bottomY;
         this.disableHighlight();
       }
     });
@@ -69,15 +71,13 @@ class DraggableMesh extends Mesh {
     this.pointer.addMoveListener((e) => {
       if (!dragStartPosition || !this.enableDrag) return;
       // TODO: if drag end but not success, animate to init bottomY
-      // todo: caculate dx,dy with proper time interval
-      const { dx, dy } = this.pointer;
-      this.onDragging();
 
       needFixBottomY = this.drag(
         new Vector2().subVectors(this.pointer.position, dragStartPosition),
         scope.projectionMatrix,
         scope.viewMatrix
       );
+      this.onDragging();
     });
 
     this.enableDrag = true;
@@ -138,7 +138,8 @@ class DraggableMesh extends Mesh {
     if (maxProjAxis === 0) {
     } else if (maxProjAxis === 1) {
       // console.log(maxProj);
-      this.bottomY += maxProj * 0.2;
+      // TODO: set bottomY instead of increase bottomY
+      this.bottomY = this.dragStartBottomY + maxProj * 6.2;
       if(Math.abs(this.bottomY - this.end.bottomY) <= this.error) {
         return true;
       }

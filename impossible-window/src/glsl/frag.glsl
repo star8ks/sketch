@@ -3,6 +3,7 @@ uniform float uTime;
 uniform vec2 uMouse;
 uniform mat4 model;
 uniform float uHighlight;
+uniform float uAlpha;
 
 struct Light {
   vec3 color;
@@ -37,7 +38,7 @@ void main () {
       normal
     );
   }
-  gl_FragColor = vec4(color, 1.0);
+  gl_FragColor = vec4(color, uAlpha);
   // gl_FragColor = vec4(normal, 1.0);
   // gl_FragColor = vColor;
 }

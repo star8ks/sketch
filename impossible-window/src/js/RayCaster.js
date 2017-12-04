@@ -145,9 +145,18 @@ class RayCaster {
   static getRelativeMousePosition(event, target) {
     target = target || event.target;
     const rect = target.getBoundingClientRect();
+
+    let clientX, clientY;
+    if (event.touches) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    }
     return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      x: clientX - rect.left,
+      y: clientY - rect.top,
     };
   }
 

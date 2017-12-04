@@ -8,6 +8,7 @@ import Pointer from './Pointer';
 import Vector2 from './Vector2';
 import { ReplayBtn } from './UI';
 import { $, bindOnce, onceLoaded } from './util';
+import PlaneBufferGeometry from './PlaneBufferGeometry';
 import Mesh from './Mesh';
 import DraggableMesh from './DraggableMesh';
 import ModelLoader from './ModelLoader';
@@ -37,9 +38,20 @@ Promise.all([
   const $replay = $`#replay`;
   const magicY = -2.46;
 
+  // constraint plane for intersecting with mouse ray
+  let constraintPlane = new PlaneBufferGeometry({width: 1, height: 10});
+  let constraintMesh = new Mesh(regl, {
+    positions: constraintPlane.vertices,
+    normals: constraintPlane.normals,
+    cells: constraintPlane.indices
+  });
+  constraintMesh.alpha = 0.4;
+  // constraintMesh.visible = false;
+
   let cubeMesh;
   const meshes = models.map(model => {
     if(model.name === 'cube') {
+      console.log(model);
       cubeMesh = new DraggableMesh({
         pointer: pointer,
         globalScope: scope,
@@ -56,6 +68,7 @@ Promise.all([
       return new Mesh(regl, model);
     }
   });
+  meshes.push(constraintMesh);
   console.log(cubeMesh);
 
 
@@ -114,7 +127,7 @@ Promise.all([
 
     scope.global(() => {
       for(let mesh of meshes) {
-        scope.mesh(() => mesh.draw(scope));
+        scope.mesh(() => mesh.visible && mesh.draw(scope));
       }
     });
 
