@@ -1,4 +1,4 @@
-import { bind } from './util';
+import { $, bind } from './util';
 
 class ReplayBtn {
   constructor(el) {
@@ -27,4 +27,37 @@ class ReplayBtn {
   }
 }
 
-export {ReplayBtn};
+const UI = {
+  init({ cubeMesh, drawScope, onFixBottomY, onReversePlaying }) {
+    const $replay = $`#replay`;
+    TweenLite.defaultEase = Expo.easeIn;
+    // animation after click on cube
+    UI.timeline = {
+      fixBottomY: () => new TimelineMax({ paused: true })
+        .to(
+          cubeMesh,
+          4 * Math.abs(cubeMesh.bottomY - cubeMesh.end.bottomY),
+          { bottomY: cubeMesh.end.bottomY }
+        )
+        .add(onFixBottomY, '+=0.0'),
+
+      reversePlaying: () => new TimelineMax({ paused: true })
+        .to(cubeMesh, 1, { bottomY: cubeMesh.initBottomY })
+        .add(onReversePlaying),
+
+      success: new TimelineMax({ paused: true })
+        .to(drawScope.light1Direction, 2, drawScope.end.light1Direction)
+        .add('scaleUp', '-=1')
+        .to(drawScope, 0.8, {
+          viewScale: drawScope.end.viewScale
+        }, 'scaleUp')
+        .to($replay, 0.8, { top: '.4em' }, 'scaleUp')
+        .to('.author', 0.8, { display: 'block', opacity: 1 }, '-=1')
+    };
+
+    UI.replayBtn = new ReplayBtn($replay);
+  }
+};
+
+export default UI;
+export {UI, ReplayBtn};

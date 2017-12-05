@@ -3,8 +3,15 @@ import mat4 from 'gl-mat4';
 import {transformDirection, noop} from './util';
 import Vector2 from './Vector2';
 import Mesh from './Mesh';
+import PlaneBufferGeometry from './PlaneBufferGeometry';
 
 class DraggableMesh extends Mesh {
+  static DRAG_PLANE = {
+    XY: Symbol(),
+    XZ: Symbol(),
+    YZ: Symbol()
+  };
+
   constructor({rayCaster, globalScope, pointer, endBottomY, error=0.1, onDragging=noop, onDragReach=noop}, ...args) {
     super(...args);
     this.rayCaster = rayCaster;
@@ -24,18 +31,46 @@ class DraggableMesh extends Mesh {
     });
     const bottomVert = this.positions[bottomIndex];
 
-    this.bottomVerts = this.positions.filter((position, index) =>
+    this.bottomVerts = this.positions.filter(position =>
       Math.abs(position[1] - bottomVert[1]) < 0.01
     );
 
     this._bottomY = bottomVert[1];
     this.initBottomY = bottomVert[1];
 
+    this.XYPlane = this.getPlane(DraggableMesh.DRAG_PLANE.YZ);
+    this.children.push(this.XYPlane);
+
     this._draggable(this.globalScope);
   }
 
+  /**
+   * get axis aligned mesh for intersecting with mouse ray
+   */
+  getPlane(type = DraggableMesh.DRAG_PLANE.XY) {
+    let constraintPlane = new PlaneBufferGeometry({ width: 10, height: 10 });
+    let constraintMesh = new Mesh(this.regl, {
+      positions: constraintPlane.vertices,
+      normals: constraintPlane.normals,
+      cells: constraintPlane.indices
+    }, this.geometryCenter);
+    // constraintMesh.alpha = 0.4;
+    constraintMesh.visible = false;
+
+    switch (type) {
+      case DraggableMesh.DRAG_PLANE.XZ:
+        mat4.rotateX(constraintMesh.matrix, constraintMesh.matrix, Math.PI / 2);
+        break;
+      case DraggableMesh.DRAG_PLANE.YZ:
+        mat4.rotateY(constraintMesh.matrix, constraintMesh.matrix, Math.PI / 2);
+        break;
+
+    }
+    return constraintMesh;
+  }
+
   _draggable(scope) {
-    let dragStartPosition;
+    let dragStartPoint;
     let needFixBottomY;
 
     this.pointer.addDownListener((e) => {
@@ -49,7 +84,7 @@ class DraggableMesh extends Mesh {
       // TODO: intersect with this.XYPlane
       // TODO: intersect all mesh and return the front mesh
       if (this.rayCaster.intersectMesh(this)) {
-        dragStartPosition = this.pointer.position.clone();
+        dragStartPoint = this.rayCaster.intersectMesh(this.XYPlane);
         this.dragStartBottomY = this._bottomY;
         this.disableHighlight();
       }
@@ -58,25 +93,30 @@ class DraggableMesh extends Mesh {
     this.pointer.addUpListener(() => {
       if (!this.enableDrag) return;
 
-      if (dragStartPosition && needFixBottomY) {
+      if (dragStartPoint && needFixBottomY) {
         this.disableHighlight();
         this.enableDrag = false;
         this.onDragReach();
       } else {
         this.startHighlight();
       }
-      dragStartPosition = undefined;
+      dragStartPoint = undefined;
     });
 
     this.pointer.addMoveListener((e) => {
-      if (!dragStartPosition || !this.enableDrag) return;
+      if (!dragStartPoint || !this.enableDrag) return;
       // TODO: if drag end but not success, animate to init bottomY
 
-      needFixBottomY = this.drag(
-        new Vector2().subVectors(this.pointer.position, dragStartPosition),
-        scope.projectionMatrix,
-        scope.viewMatrix
-      );
+      this.rayCaster.setFromOrthographicCamera(e, {
+        projectionMatrix: scope.projectionMatrix,
+        viewMatrix: scope.viewMatrix
+      });
+      let intersectPoint = this.rayCaster.intersectMesh(this.XYPlane);
+      if (!intersectPoint) return;
+
+      // TODO: use this.getDragAxis to determine drag bottomY or upY
+      // TODO: enable drag in x and z axis to make game more difficult
+      needFixBottomY = this.dragBottomY(intersectPoint[1] - dragStartPoint[1]);
       this.onDragging();
     });
 
@@ -105,24 +145,31 @@ class DraggableMesh extends Mesh {
   }
 
   /**
-   * Get model coordinate axis that transformed to clip space
-   * @param {mat4} viewProjectionMatrix
+   * Get model coordinate axis
+   * @TODO apply this.matrix on axis
    */
-  getAxis(viewProjectionMatrix) {
-    const matrix = mat4.multiply([], this.matrix, viewProjectionMatrix);
-    return [[1, 0, 0], [0, 1, 0], [0, 0, 1]].map(axis => {
-      // axis in clip space
-      const clip = transformDirection(axis, matrix);
-      return new Vector2(clip[0], clip[1]).normalize();
-    });
+  getAxis() {
+    return [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
   }
 
-  drag(dragDirection, projectionMatrix, viewMatrix) {
-    if(!this.enableDrag) return;
+  /**
+   * @return {Boolean} whether reached then.end.bottomY or not
+   */
+  dragBottomY(yOffset) {
+    this.bottomY = this.dragStartBottomY + yOffset;
+    if (Math.abs(this.bottomY - this.end.bottomY) <= this.error) {
+      return true;
+    }
+    return false;
+  }
 
-    // const moveDirection = new Vector2(dx, dy).normalize();
-    const axis = this.getAxis(mat4.multiply([], projectionMatrix, viewMatrix));
-    const projects = axis.map(clip => dragDirection.dot(clip));
+  /**
+   * get drag axis and plane to intersect with
+   * @param {vec3} dragDirection
+   */
+  getDragAxis(dragDirection) {
+    const axis = this.getAxis();
+    const projects = axis.map(ax => dragDirection.dot(ax));
 
     let maxProjAxis, maxProjAbs=0, maxProj;
     projects.forEach((proj, axis) => {
@@ -134,19 +181,11 @@ class DraggableMesh extends Mesh {
       }
     });
 
-    // TODO: enable drag in x and z axis to make game more difficult
     if (maxProjAxis === 0) {
     } else if (maxProjAxis === 1) {
-      // console.log(maxProj);
-      // TODO: set bottomY instead of increase bottomY
-      this.bottomY = this.dragStartBottomY + maxProj * 6.2;
-      if(Math.abs(this.bottomY - this.end.bottomY) <= this.error) {
-        return true;
-      }
+      return [0, Math.sign(maxProj), 0];
     } else if (maxProjAxis === 2) {
     }
-
-    return false;
   }
 
   get bottomY() {

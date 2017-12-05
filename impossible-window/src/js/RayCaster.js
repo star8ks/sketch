@@ -44,10 +44,10 @@ class RayCaster {
   /**
    * test if ray intersect with mesh
    * @param {Mesh} mesh
-   * @return {Boolean}
+   * @return {vec3|null}
    */
   intersectMesh(mesh) {
-    console.log('ray: ', this.rayOrigin, this.rayDir);
+    // console.log('ray: ', this.rayOrigin, this.rayDir);
     // this.rayPoint[2] = 100;
     for (let j = 0; j < mesh.elements.length; j++) {
       const f = mesh.elements[j];
@@ -65,18 +65,11 @@ class RayCaster {
 
       const t = this.intersectTriangle(tri);
       if(t !== null && t >= this.near && t <= this.far) {
-        console.log(this.rayDir, this.rayOrigin);
-        console.log([
-          vec3.transformMat4([], mesh.positions[f[0]], mesh.matrix),
-          vec3.transformMat4([], mesh.positions[f[1]], mesh.matrix),
-          vec3.transformMat4([], mesh.positions[f[2]], mesh.matrix)
-        ]);
-        console.log('tri intersect', t, mesh.positions[f[0]], mesh.positions[f[1]], mesh.positions[f[2]]);
-        return true;
+        return vec3.add([], this.rayOrigin, vec3.scale([], this.rayDir, t));
       }
     }
 
-    return false;
+    return null;
   }
 
   /**
@@ -125,7 +118,7 @@ class RayCaster {
     // if (v < 0 || u + v > 1) return null;
 
     let t = vec3.dot(edge2, qvec) / det;
-    console.log(vec3.dot(edge2, qvec), det);
+    // console.log(vec3.dot(edge2, qvec), det);
 
     if(t > EPSILON) {
       out[0] = this.rayOrigin[0] + t * this.rayDir[0];
@@ -181,7 +174,7 @@ class RayCaster {
     // we do not need to reverse perspective division here
     // because this is a ray with no intrinsic depth.
     // const clipCoord = [...normalCoord, -1, 1];
-    console.log('4d Homogeneous Clip Coordinates: ', [...normalCoord, -1, 1]);
+    // console.log('4d Homogeneous Clip Coordinates: ', [...normalCoord, -1, 1]);
 
     // 4d eye space coordinates (Camera as origin) = inverseProjectionMatrix * homogeneous clip coord
     // 4d world space coordinates = inverseViewMatrix * eye coord
