@@ -172,12 +172,20 @@ class DraggableMesh extends Mesh {
         if (isReached) {
           this.disableHighlight();
           this.enableDrag = false;
-          this.onDragReach();
+          // if reached to this.end.value, we need animate to fix error
+          TweenMax.to(
+            this,
+            4 * Math.abs(this[this.end.property] - this.end.value),
+            {
+              [this.end.property]: this.end.value,
+              onComplete: this.onDragReach
+            }
+          );
         } else {
           this.enableDrag = false;
 
           if (!this.sameAsStart()) this.onDragFail();
-          // if drag end but not success, animate to start status
+          // if drag end but not reached, animate to start status
           TweenMax.to(this, 0.2, {
             bottomY: this.start.bottomY,
             upY: this.start.upY,
@@ -234,7 +242,7 @@ class DraggableMesh extends Mesh {
 
   /**
    * TODO: determine drag bottomY or upY
-   * @return {Boolean} whether reached then.end.value or not
+   * @return {Boolean} whether reached this.end.value or not
    */
   dragY(yOffset) {
     const nextBottomY = this.dragStartBottomY + yOffset;

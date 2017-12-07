@@ -49,7 +49,10 @@ Promise.all([
         endProperty: 'bottomY',
         endValue: magicY,
         error: 0.5,
-        onDragReach: () => UI.timeline.fix().play(),
+        onDragReach: () => {
+          sound.yes.play();
+          UI.timeline.success.play();
+        },
         onDragFail: () => sound.no.play(),
       }, regl, model);
       cubeMesh.enableHighlight = true;
@@ -63,10 +66,6 @@ Promise.all([
   UI.init({
     cubeMesh: cubeMesh,
     drawScope: scope,
-    onFixed() {
-      UI.timeline.success.play();
-      sound.yes.play();
-    },
     onReversePlaying() {
       cubeMesh.enableDrag = true;
       cubeMesh.startHighlight();
