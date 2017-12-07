@@ -8,7 +8,12 @@ class ModelLoader {
 
   static loadObj(url) {
     return fetch(url)
-    .then(response => response.text())
+    .then(response => {
+      if (!response.ok) {
+        throw Error(response.statusText);
+      }
+      return response.text();
+    })
     .then(text => {
       // const objs = text.replace(/\n+^$\n/mg, '\n') // remove empty lines
       //   .concat('\n') // add tail new line to make match below esier
