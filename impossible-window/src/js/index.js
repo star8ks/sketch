@@ -25,7 +25,8 @@ const pointer = new Pointer(canvas);
 
 const sound = {
   flashback: new Audio('./sound/167683__minecast__flashback-transition.mp3'),
-  yes: new Audio('./sound/245314__bwsmithatl__production-sounder-button-zipper-usage.wav')
+  yes: new Audio('./sound/245314__bwsmithatl__production-sounder-button-zipper-usage.wav'),
+  no: new Audio('./sound/400372__psykoosiossi__fastwhoosh.wav')
 };
 
 
@@ -45,11 +46,11 @@ Promise.all([
         pointer: pointer,
         globalScope: scope,
         rayCaster: new RayCaster(gl, scope.near, scope.far),
-        endBottomY: magicY,
+        endProperty: 'bottomY',
+        endValue: magicY,
         error: 0.5,
-        onDragReach: () => {
-          UI.timeline.fixBottomY().play();
-        }
+        onDragReach: () => UI.timeline.fix().play(),
+        onDragFail: () => sound.no.play(),
       }, regl, model);
       cubeMesh.enableHighlight = true;
       return cubeMesh;
@@ -62,7 +63,7 @@ Promise.all([
   UI.init({
     cubeMesh: cubeMesh,
     drawScope: scope,
-    onFixBottomY() {
+    onFixed() {
       UI.timeline.success.play();
       sound.yes.play();
     },

@@ -28,21 +28,21 @@ class ReplayBtn {
 }
 
 const UI = {
-  init({ cubeMesh, drawScope, onFixBottomY, onReversePlaying }) {
+  init({ cubeMesh, drawScope, onFixed, onReversePlaying }) {
     const $replay = $`#replay`;
     TweenLite.defaultEase = Expo.easeIn;
     // animation after click on cube
     UI.timeline = {
-      fixBottomY: () => new TimelineMax({ paused: true })
+      fix: () => new TimelineMax({ paused: true })
         .to(
           cubeMesh,
-          4 * Math.abs(cubeMesh.bottomY - cubeMesh.end.bottomY),
-          { bottomY: cubeMesh.end.bottomY }
+          4 * Math.abs(cubeMesh[cubeMesh.end.property] - cubeMesh.end.value),
+          { [cubeMesh.end.property]: cubeMesh.end.value }
         )
-        .add(onFixBottomY, '+=0.0'),
+        .add(onFixed, '+=0.0'),
 
       reversePlaying: () => new TimelineMax({ paused: true })
-        .to(cubeMesh, 1, { bottomY: cubeMesh.initBottomY })
+        .to(cubeMesh, 1, cubeMesh.start)
         .add(onReversePlaying),
 
       success: new TimelineMax({ paused: true })

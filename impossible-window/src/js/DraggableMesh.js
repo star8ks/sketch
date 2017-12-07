@@ -12,36 +12,110 @@ class DraggableMesh extends Mesh {
     YZ: Symbol()
   };
 
-  constructor({rayCaster, globalScope, pointer, endBottomY, error=0.1, onDragging=noop, onDragReach=noop}, ...args) {
+  constructor({rayCaster, globalScope, pointer, endProperty, endValue, error=0.1, onDragging=noop, onDragReach=noop, onDragFail=noop}, ...args) {
     super(...args);
     this.rayCaster = rayCaster;
     this.globalScope = globalScope;
     this.pointer = pointer;
     this.onDragging = onDragging;
     this.onDragReach = onDragReach; // onDragReach will executed when drag to endBottmY
+    this.onDragFail = onDragFail;
+
+    // start status
+    this.start = {};
+    // end status
     this.end = {
-      bottomY: endBottomY
+      property: endProperty,
+      value: endValue
     };
     this.error = error;
 
-    // find all vertex on cube bottom plane
-    // if normal.y is -1, the vertex is on bottom face
-    const bottomIndex = this.normals.findIndex(function(normal) {
-      return Math.abs(normal[1] + 1) < 0.01;
-    });
-    const bottomVert = this.positions[bottomIndex];
-
-    this.bottomVerts = this.positions.filter(position =>
-      Math.abs(position[1] - bottomVert[1]) < 0.01
-    );
-
-    this._bottomY = bottomVert[1];
-    this.initBottomY = bottomVert[1];
+    this._initVertGroup();
 
     this.XYPlane = this.getPlane(DraggableMesh.DRAG_PLANE.YZ);
     this.children.push(this.XYPlane);
 
     this._draggable(this.globalScope);
+  }
+
+  _initVertGroup() {
+    const normalError = 0.01;
+    // find all vertex on cube bottom plane
+    // if normal.y is -1, the vertex is on bottom face
+    this.bottomVerts = this._getVertGroup(normal => {
+      return Math.abs(normal[1] + 1) < normalError;
+    }, (bottomVert) => {
+      this._bottomY = bottomVert[1];
+      this.start.bottomY = bottomVert[1];
+    });
+
+    this.upVerts = this._getVertGroup(normal => {
+      return Math.abs(normal[1] - 1) < normalError;
+    }, vert => {
+      this._upY = vert[1];
+      this.start.upY = vert[1];
+    });
+
+    this.frontVerts = this._getVertGroup(normal => {
+      return Math.abs(normal[2] - 1) < normalError;
+    }, vert => {
+      this._frontZ = vert[2];
+      this.start.frontZ = vert[2];
+    });
+
+    this.backVerts = this._getVertGroup(normal => {
+      return Math.abs(normal[2] + 1) < normalError;
+    }, vert => {
+      this._backZ = vert[2];
+      this.start.backZ = vert[2];
+    });
+  }
+
+  _getVertGroup(findNormal, cb) {
+    const index = this.normals.findIndex(findNormal);
+    const bottomVert = this.positions[index];
+    cb(bottomVert);
+    return this.positions.filter(position => Math.abs(position[1] - bottomVert[1]) < 0.01);
+  }
+
+  get bottomY() {
+    return this._bottomY;
+  }
+  set bottomY(y) {
+    this.bottomVerts.forEach(vert => {
+      vert[1] = y;
+    });
+    this._bottomY = y;
+  }
+
+  get upY() {
+    return this._upY;
+  }
+  set upY(y) {
+    this.upVerts.forEach(vert => {
+      vert[1] = y;
+    });
+    this._upY = y;
+  }
+
+  get frontZ() {
+    return this._frontZ;
+  }
+  set frontZ(z) {
+    this.frontVerts.forEach(vert => {
+      vert[2] = z;
+    });
+    this._frontZ = z;
+  }
+
+  get backZ() {
+    return this._backZ;
+  }
+  set backZ(z) {
+    this.backVerts.forEach(vert => {
+      vert[2] = z;
+    });
+    this._backZ = z;
   }
 
   /**
@@ -71,7 +145,7 @@ class DraggableMesh extends Mesh {
 
   _draggable(scope) {
     let dragStartPoint;
-    let needFixBottomY;
+    let isReached;
 
     this.pointer.addDownListener((e) => {
       if (!this.enableDrag) return;
@@ -86,6 +160,7 @@ class DraggableMesh extends Mesh {
       if (this.rayCaster.intersectMesh(this)) {
         dragStartPoint = this.rayCaster.intersectMesh(this.XYPlane);
         this.dragStartBottomY = this._bottomY;
+        this.dragStartUpY = this._upY;
         this.disableHighlight();
       }
     });
@@ -93,19 +168,31 @@ class DraggableMesh extends Mesh {
     this.pointer.addUpListener(() => {
       if (!this.enableDrag) return;
 
-      if (dragStartPoint && needFixBottomY) {
-        this.disableHighlight();
-        this.enableDrag = false;
-        this.onDragReach();
-      } else {
-        this.startHighlight();
+      if (dragStartPoint) {
+        if (isReached) {
+          this.disableHighlight();
+          this.enableDrag = false;
+          this.onDragReach();
+        } else {
+          this.enableDrag = false;
+
+          if (!this.sameAsStart()) this.onDragFail();
+          // if drag end but not success, animate to start status
+          TweenMax.to(this, 0.2, {
+            bottomY: this.start.bottomY,
+            upY: this.start.upY,
+            onComplete: () => {
+              this.enableDrag = true;
+              this.startHighlight();
+            }
+          });
+        }
       }
       dragStartPoint = undefined;
     });
 
     this.pointer.addMoveListener((e) => {
       if (!dragStartPoint || !this.enableDrag) return;
-      // TODO: if drag end but not success, animate to init bottomY
 
       this.rayCaster.setFromOrthographicCamera(e, {
         projectionMatrix: scope.projectionMatrix,
@@ -114,16 +201,18 @@ class DraggableMesh extends Mesh {
       let intersectPoint = this.rayCaster.intersectMesh(this.XYPlane);
       if (!intersectPoint) return;
 
-      // TODO: use this.getDragAxis to determine drag bottomY or upY
-      // TODO: enable drag in x and z axis to make game more difficult
-      needFixBottomY = this.dragBottomY(intersectPoint[1] - dragStartPoint[1]);
-      this.onDragging();
+      // TODO: determine drag axis on 1st call after drag start
+      const dragDirection = vec3.subtract([], intersectPoint, dragStartPoint);
+      const dragAxis = this.getDragAxis(dragDirection);
+      if (dragAxis && dragAxis[1] !== 0) {
+        // TODO: enable drag in x and z axis to make game more difficult
+        isReached = this.dragY(intersectPoint[1] - dragStartPoint[1]);
+        this.onDragging();
+      }
     });
 
     this.enableDrag = true;
 
-
-    // console.log(TweenMax, TimelineMax)
     // cube highlight blink
     this.highlightTween = new TweenMax(this, 2, {
       highlight: 2,
@@ -134,14 +223,30 @@ class DraggableMesh extends Mesh {
     });
   }
 
-  startHighlight() {
-    this.highlightTween.play();
-    this.enableHighlight = true;
+  sameAsStart() {
+    const keys = Object.keys(this.start);
+    for(const key of keys) {
+      // console.log(key, this[key], this.start[key], this[key] == this.start[key]);
+      if(this[key] !== this.start[key]) return false;
+    }
+    return true;
   }
 
-  disableHighlight() {
-    this.highlightTween.pause();
-    this.enableHighlight = false;
+  /**
+   * TODO: determine drag bottomY or upY
+   * @return {Boolean} whether reached then.end.value or not
+   */
+  dragY(yOffset) {
+    const nextBottomY = this.dragStartBottomY + yOffset;
+    const nextUpY = this.dragStartUpY + yOffset;
+    if (nextBottomY > this.start.bottomY) {
+      this.bottomY = this.start.bottomY;
+      this.upY = nextUpY;
+    } else if (nextUpY < this.start.upY){
+      this.upY = this.start.upY;
+      this.bottomY = nextBottomY;
+    }
+    return Math.abs(this[this.end.property] - this.end.value) <= this.error;
   }
 
   /**
@@ -153,23 +258,12 @@ class DraggableMesh extends Mesh {
   }
 
   /**
-   * @return {Boolean} whether reached then.end.bottomY or not
-   */
-  dragBottomY(yOffset) {
-    this.bottomY = this.dragStartBottomY + yOffset;
-    if (Math.abs(this.bottomY - this.end.bottomY) <= this.error) {
-      return true;
-    }
-    return false;
-  }
-
-  /**
    * get drag axis and plane to intersect with
    * @param {vec3} dragDirection
    */
   getDragAxis(dragDirection) {
     const axis = this.getAxis();
-    const projects = axis.map(ax => dragDirection.dot(ax));
+    const projects = axis.map(ax => vec3.dot(dragDirection, ax));
 
     let maxProjAxis, maxProjAbs=0, maxProj;
     projects.forEach((proj, axis) => {
@@ -188,16 +282,16 @@ class DraggableMesh extends Mesh {
     }
   }
 
-  get bottomY() {
-    return this._bottomY;
+  startHighlight() {
+    this.highlightTween.play();
+    this.enableHighlight = true;
   }
 
-  set bottomY(y) {
-    this.bottomVerts.forEach(vert => {
-      vert[1] = y;
-    });
-    this._bottomY = y;
+  disableHighlight() {
+    this.highlightTween.pause();
+    this.enableHighlight = false;
   }
+
 }
 
 export default DraggableMesh;
