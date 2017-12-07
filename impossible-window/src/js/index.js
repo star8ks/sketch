@@ -1,8 +1,6 @@
 // Calling the regl module with no arguments creates a full screen canvas and
 // WebGL context, and then uses this context to initialize a new REGL instance
-const regl = require('regl')();
-const mat4 = require('gl-mat4');
-
+import initREGL from 'regl';
 import { TweenMax, Linear, TimelineMax } from 'gsap';
 import Pointer from './Pointer';
 import Vector2 from './Vector2';
@@ -17,6 +15,7 @@ import tilt3D from './titl3D';
 import RayCaster from './RayCaster';
 import drawScope from './drawScope';
 
+const regl = initREGL();
 const DEV = false;
 const gl = regl._gl;
 const canvas = regl._gl.canvas;

@@ -1,5 +1,5 @@
-const mat4 = require('gl-mat4');
 const glslify = require('glslify');
+import mat4 from 'gl-mat4';
 import { normalRGB } from './util';
 
 /**

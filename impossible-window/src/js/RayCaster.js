@@ -1,5 +1,5 @@
-const mat4 = require('gl-mat4');
-const vec3 = require('gl-vec3');
+import vec3 from 'gl-vec3';
+import mat4 from 'gl-mat4';
 import {transformDirection} from './util';
 
 /**

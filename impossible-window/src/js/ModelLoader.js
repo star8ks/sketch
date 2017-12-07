@@ -1,4 +1,4 @@
-const mat4 = require('gl-mat4');
+import mat4 from 'gl-mat4';
 import ObjLoader from './ObjLoader';
 
 class ModelLoader {
