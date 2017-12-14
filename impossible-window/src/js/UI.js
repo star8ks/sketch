@@ -34,7 +34,7 @@ const UI = {
     // animation after click on cube
     UI.timeline = {
       reversePlaying: () => new TimelineMax({ paused: true })
-        .to(cubeMesh, 1, cubeMesh.start)
+        .to(cubeMesh, 1, Object.assign({}, cubeMesh.start))
         .add(onReversePlaying),
 
       success: new TimelineMax({ paused: true })

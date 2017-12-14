@@ -48,7 +48,7 @@ class ObjLoader{
       models = [];  // models info to return
 
     function pushToModels(fVert, fNorm, fUV=[], fIndex, name='') {
-      console.log('push to models:', {fVert, fNorm, fUV, fIndex, name});
+      // console.log('push to models:', {fVert, fNorm, fUV, fIndex, name});
       models.push({
         vert: fVert, norm: fNorm, uv: fUV, index: fIndex, name
       });

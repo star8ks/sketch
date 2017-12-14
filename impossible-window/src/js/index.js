@@ -40,7 +40,7 @@ Promise.all([
   let cubeMesh;
   const meshes = models.map(model => {
     if (model.name === 'cube') {
-      console.log(model);
+      // console.log(model);
       cubeMesh = new DraggableMesh({
         pointer: pointer,
         globalScope: scope,
@@ -60,7 +60,7 @@ Promise.all([
       return new Mesh(regl, model);
     }
   });
-  console.log(cubeMesh);
+  // console.log(cubeMesh);
 
   UI.init({
     cubeMesh: cubeMesh,
@@ -84,7 +84,7 @@ Promise.all([
     regl.poll();
     regl.clear({
       depth: 1,
-      color: [1, 1, 1, 0]
+      color: [0.20, 0.53, 0.90, 0]//0x3F87E7
     });
 
     scope.global(() => {

@@ -72,7 +72,7 @@ function PlaneBufferGeometry({width=1, height=1, widthSegments=1, heightSegments
 
   // build geometry
 
-  console.log(this.vertices, this.normals, this.indices);
+  // console.log(this.vertices, this.normals, this.indices);
 
 }
 

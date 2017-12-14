@@ -5,8 +5,9 @@ class Mesh {
   constructor(regl, {
       positions, cells, normals,
       matrix = mat4.identity([]), name = '',
-      min = [0, 0, 0], max = [0, 0, 0]
-    }, center = [0, 0, 0]) {
+      min = [0, 0, 0], max = [0, 0, 0],
+      center = [0, 0, 0]
+    }) {
     this.regl = regl;
     this.center = center;
 

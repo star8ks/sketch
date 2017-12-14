@@ -72,11 +72,12 @@ class DraggableMesh extends Mesh {
       this.start.backZ = vert[2];
     });
 
-    console.log('bottom', this.bottomVerts);
-    console.log('up', this.upVerts);
+    // console.log('bottom', this.bottomVerts);
+    // console.log('up', this.upVerts);
 
-    console.log('front', this.frontVerts);
-    console.log('back', this.backVerts);
+    // console.log('front', this.frontVerts);
+    // console.log('back', this.backVerts);
+    console.log('start: ', this.start);
   }
 
   _getVertGroup(index, findNormal, cb) {
@@ -134,10 +135,11 @@ class DraggableMesh extends Mesh {
     let constraintMesh = new Mesh(this.regl, {
       positions: constraintPlane.vertices,
       normals: constraintPlane.normals,
-      cells: constraintPlane.indices
-    }, this.geometryCenter);
+      cells: constraintPlane.indices,
+      center: this.geometryCenter
+    });
     constraintMesh.alpha = 0.4;
-    // constraintMesh.visible = false;
+    constraintMesh.visible = false;
 
     switch (type) {
       case DraggableMesh.DRAG_PLANE.XZ:
@@ -197,17 +199,17 @@ class DraggableMesh extends Mesh {
           TweenMax.to(
             this,
             4 * Math.abs(this[this.end.property] - this.end.value),
-            {
-              [this.end.property]: this.end.value,
-              onComplete: this.onDragReach
-            }
-          );
+            { [this.end.property]: this.end.value },
+          ).eventCallback('onComplete', this.onDragReach);
+
         } else {
           this.enableDrag = false;
 
           if (!this.sameAsStart()) this.onDragFail();
           // if drag end but not reached, animate to start status
-          TweenMax.to(this, 0.2, this.start).eventCallback('onComplete', () => {
+          // Not simply do TweenMax.to(this, 0.2, this.start) here,
+          // because TweenMax.to().eventCallback will add property like onComplete and onCompleteParams on this.start
+          TweenMax.to(this, 0.2, Object.assign({}, this.start)).eventCallback('onComplete', () => {
             this.enableDrag = true;
             this.startHighlight();
           });
@@ -263,9 +265,9 @@ class DraggableMesh extends Mesh {
 
   sameAsStart() {
     const keys = Object.keys(this.start);
-    for(const key of keys) {
-      // console.log(key, this[key], this.start[key], this[key] == this.start[key]);
-      if(this[key] !== this.start[key]) return false;
+    for (const key of keys) {
+      // if (typeof this[key] !== 'number') continue;
+      if (Math.abs(this[key] - this.start[key]) > DraggableMesh.vertexCompareError) return false;
     }
     return true;
   }

@@ -16,7 +16,7 @@ const drawScope = function (regl) {
     initViewMatrix: mat4.lookAt([],
       // [1, 1+Math.sin(tick*0.04), 1],
       // why 1.41 is the magic number? square root of 2?
-      // it seems blender's ortho camera's default value
+      // TO UNDERSTAND: How does lookAt and projection matrix affect the final result?
       [1, 1.4142, 1],
       [0, 0.0, 0],
       [0, 1, 0]
