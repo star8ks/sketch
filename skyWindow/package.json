@@ -1,0 +1,47 @@
+{
+  "name": "sketch",
+  "version": "1.0.0",
+  "description": "ThreeJS, WebGL sketches",
+  "main": "index.js",
+  "license": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License",
+  "author": {
+    "name": "Ray Victor",
+    "email": "ray7551@gmail.com",
+    "url": "https://github.com/ray7551"
+  },
+  "dependencies": {
+    "three": "^0.86.0",
+    "three-orbit-viewer": "^69.3.1"
+  },
+  "devDependencies": {
+    "babel-preset-es2015": "^6.22.0",
+    "babelify": "^7.3.0",
+    "browserify": "^14.0.0",
+    "budo": "^10.0.4",
+    "glslify": "^6.0.1",
+    "uglify-js": "^3.0.26"
+  },
+  "scripts": {
+    "start": "../node_modules/.bin/budo.cmd index.js:bundle.js -v -d --live",
+    "startssl": "../node_modules/.bin/budo.cmd index.js:bundle.js -v -d --live --ssl --cert=../../server.cer --key=../../server.key",
+    "build": "../node_modules/.bin/browserify.cmd index.js | ../node_modules/.bin/uglifyjs.cmd -cm > bundle.js"
+  },
+  "private": true,
+  "keywords": [
+    "three",
+    "js",
+    "threejs",
+    "glsl"
+  ],
+  "browserify": {
+    "transform": [
+      "babelify",
+      "glslify"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ray7551/sketch.git"
+  },
+  "homepage": "https://github.com/ray7551/sketch"
+}
