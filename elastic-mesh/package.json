@@ -6,8 +6,7 @@
   "scripts": {
     "start": "npm run build && node server.js",
     "dev": "budo public/client.js:bundle.js -v -d public --live",
-    "build": "cp -f public/index.html dist/index.html && cp -rf public/glsl dist/glsl && cp -rf public/static dist/static && browserify public/client.js -t [ babelify --presets [ es2015 ] ] | uglifyjs -c -m > dist/bundle.js",
-    "publish": "surge -p ./dist --domain elastic-card.surge.sh"
+    "build": "cp -f public/index.html dist/index.html && cp -rf public/glsl dist/glsl && cp -rf public/static dist/static && browserify public/client.js -t [ babelify --presets [ es2015 ] ] | uglifyjs -c -m > dist/bundle.js"
   },
   "dependencies": {
     "express": "^4.15.3",
