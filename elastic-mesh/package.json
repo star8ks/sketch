@@ -1,13 +1,13 @@
 {
   "name": "elastic-mesh-demo",
-  "version": "1.3.2",
+  "version": "0.0.1",
   "description": "What am I about?",
   "main": "server.js",
   "scripts": {
     "start": "npm run build && node server.js",
     "dev": "budo public/client.js:bundle.js -v -d public --live",
-    "build": "cp public/index.html dist/index.html && browserify public/client.js -t [ babelify --presets [ es2015 ] ] | uglifyjs -c -m > dist/bundle.js",
-    "publish": "surge -p ./public --domain elastic-card.surge.sh"
+    "build": "cp -f public/index.html dist/index.html && cp -rf public/glsl dist/glsl && cp -rf public/static dist/static && browserify public/client.js -t [ babelify --presets [ es2015 ] ] | uglifyjs -c -m > dist/bundle.js",
+    "publish": "surge -p ./dist --domain elastic-card.surge.sh"
   },
   "dependencies": {
     "express": "^4.15.3",
@@ -20,13 +20,5 @@
     "browserify": "^14.5.0",
     "budo": "^10.0.4",
     "uglify-js": "^3.0.26"
-  },
-  "repository": {
-    "url": "https://glitch.com/edit/#!/welcome-project"
-  },
-  "keywords": [
-    "node",
-    "glitch",
-    "express"
-  ]
+  }
 }

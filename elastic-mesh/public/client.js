@@ -19,20 +19,20 @@ const app = createOrbitViewer({
 let assets = new Assets();
 assets.load([{
     key: 'audio-boing',
-    url: 'https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fboing.mp3?1504947644759',
+    url: './static/boing.mp3',
     loader: THREE.AudioLoader
   }, {
     key: 'tex-id',
     // url: './id.png',
-    url: 'https://cdn.glitch.com/a7e5950b-6ba6-4ecd-9a13-c6864732a451%2Fid.png?1504946992645',
+    url: './static/id.png',
     loader: THREE.TextureLoader
   }, {
     key: 'file-vs',
-    url: './vert.glsl',
+    url: './glsl/vert.glsl',
     loader: THREE.FileLoader
 }, {
     key: 'file-fs',
-    url: './frag.glsl',
+    url: './glsl/frag.glsl',
     loader: THREE.FileLoader
 }]).then(ready);
 
@@ -186,7 +186,7 @@ function ready() {
       shaderMat.uniforms.uGrabStart.value = 0.0;
       shaderMat.uniforms.uReleaseStart.value = time;
       app.controls.noRotate = false;
-      
+
       // if the audio is playing, rewind to start point
       if(boingSound.isPlaying) boingSound.stop();
       boingSound.play();
@@ -202,7 +202,7 @@ function ready() {
     }
   });
 
-  
+
   //provide our shader with iGlobalTime for cool effects
   app.on('tick', dt => {
     // console.log(dt);
