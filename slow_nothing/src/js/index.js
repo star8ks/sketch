@@ -1,5 +1,3 @@
-// Calling the regl module with no arguments creates a full screen canvas and
-// WebGL context, and then uses this context to initialize a new REGL instance
 const regl = require('regl')();
 const glslify = require('glslify');
 import Pointer from './Pointer';
@@ -17,27 +15,14 @@ pointer.addPressingListener(e => {
 // TODO: use a global drawScope to define attributes and uniforms, switch different shaders
 // TODO: user defined fragment shader
 // TODO: masking transition on switching shaders
-// Calling regl() creates a new partially evaluated draw command
-const draw = regl({
-
-  // Shaders in regl are just strings.  You can use glslify or whatever you want
-  // to define them.  No need to manually create shader objects.
-  frag: `
-    precision mediump float;
-    #define SEED ${seed}
-    ` + glslify('../glsl/origin.glsl'),
-
+const globalScope = regl({
   vert: glslify('../glsl/vert.glsl'),
 
-  // Here we define the vertex attributes for the above shader
   attributes: {
-    // regl.buffer creates a new array buffer object
     position: regl.buffer([
       [-1,-1],[1,-1],[-1,1],  // no need to flatten nested arrays, regl automatically
       [-1,1],[1,1],[1,-1]     // unrolls them into a typedarray (default Float32)
     ])
-
-    // regl automatically infers sane defaults for the vertex attribute pointers
   },
 
   uniforms: {
@@ -47,7 +32,6 @@ const draw = regl({
     uTime: ({tick}) => 0.01 * tick,
     uMouse: () => [pointer.position.x, pointer.position.y],
     uMorph: () => morphAmount,
-    uRandomSeed: DEV ? 138975.579831 : new Date().getTime() % 1000000, //
     uGrid: ({viewportWidth, viewportHeight}) => {
       const ratio = 0.32;
       return viewportHeight >= viewportWidth ? [1, viewportHeight / viewportWidth * ratio]
@@ -55,9 +39,23 @@ const draw = regl({
     }
   },
 
-  // This tells regl the number of vertices to draw in this command
   count: 6
 });
+
+const fragShaders = [
+  glslify.file('../glsl/origin.glsl'),
+  glslify.file('../glsl/slow1.glsl')
+];
+const modes = fragShaders.map(shader =>
+  regl({
+    frag: `precision mediump float;
+        #define SEED ${seed}
+        ` + shader,
+  })
+);
+
+// TODO: if click on another mode through UI, push mode to `drawModes`
+const drawModes = [modes[0]];
 
 let anime = new AnimeLoop(() => {
   regl.poll();
@@ -65,5 +63,12 @@ let anime = new AnimeLoop(() => {
     depth: 1,
     color: [0, 0, 0, 0]
   });
-  draw();
+
+  globalScope(() => {
+    // TODO: if modes.length > 1, try some masking transition on them,
+    // and after transition done, remove all modes except the last one
+    for(let draw of drawModes) {
+      draw();
+    }
+  });
 });
