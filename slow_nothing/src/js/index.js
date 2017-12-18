@@ -60,7 +60,7 @@ const fbo = regl.framebuffer({
   depth: false
 });
 
-const modes = ['modeOrigin', 'modeSlow2', 'modeWater', 'modeSlow1'];
+const modes = ['modeSlow2', 'modeSlow1', 'modeOrigin', 'modeWater'];
 const currentMode = [modes[0], modes[1]];
 // TODO: if click on another mode through UI, push mode to `drawModes`
 let draw2FragData = regl({
@@ -74,7 +74,7 @@ let draw2FragData = regl({
 });
 
 Promise.all([
-  ImageLoader.load('./mix.jpg'),
+  ImageLoader.load('./static/mix.jpg'),
   onceLoaded()
 ]).then(data => {
   const mixImage = data[0];
@@ -146,6 +146,7 @@ Promise.all([
   });
 
 }).catch(e => {
+  // TODO detect webgl and webgl extension support
   document.querySelector('#message').innerHTML = 'Something went wrong.<br>' + e.message;
   console.log(e);
 });
