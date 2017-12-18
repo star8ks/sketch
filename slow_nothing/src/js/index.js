@@ -4,6 +4,9 @@ const regl = require('regl')({
 const glslify = require('glslify');
 import Pointer from './Pointer';
 import AnimeLoop from './AnimeLoop';
+import {onceLoaded, clamp} from './util';
+import ImageLoader from './ImageLoader';
+import UI from './UI';
 
 const DEV = true;
 const seed = DEV ? 13875.579831 : new Date().getTime() % 100000 + 0.5831;
@@ -68,43 +71,67 @@ const draw2FragData = regl({
   framebuffer: fbo
 });
 
-const draw2Screen = regl({
-  uniforms: {
-    mode0Tex: fbo.color[0],
-    mode1Tex: fbo.color[1]
-  },
-  frag: `precision mediump float;
-    uniform vec2 uResolution;
-    uniform sampler2D mode0Tex;
-    uniform sampler2D mode1Tex;
-    void main() {
-      // vec2 uv = (2.0 * gl_FragCoord.xy - uResolution.xy) / uResolution;
-      vec2 uv = gl_FragCoord.xy / uResolution;
-      gl_FragColor = texture2D(mode0Tex, uv);
-    }
-  `
-});
+Promise.all([
+  ImageLoader.load('./mix.jpg'),
+  onceLoaded()
+]).then(data => {
+  const mixImage = data[0];
+  UI.onSwitch('switch', () => {
 
-let anime = new AnimeLoop(() => {
-  regl.poll();
-  regl.clear({
-    depth: 1,
-    color: [0, 0, 0, 0]
   });
-  // fbo({
-  //   color: [
-  //     regl.texture({ type: 'float' })
-  //   ]
-  // });
 
-  globalScope(({ viewportWidth, viewportHeight }) => {
-    fbo.resize(viewportWidth, viewportHeight);
-    // TODO: after transition done, remove all modes except the last one
-    draw2FragData();
-    // for(let draw of drawModes) {
-    //   draw();
-    // }
+  const draw2Screen = regl({
+    uniforms: {
+      mode0Tex: fbo.color[0],
+      mode1Tex: fbo.color[1],
+      mixTex: regl.texture(mixImage),
+      transitionRatio: regl.prop('transitionRatio')
+    },
+    frag: `precision mediump float;
+      uniform vec2 uResolution;
+      uniform sampler2D mode0Tex;
+      uniform sampler2D mode1Tex;
+      uniform sampler2D mixTex;
+      uniform float transitionRatio;
 
-    draw2Screen();
+      const float threshold = 0.4;
+      void main() {
+        // vec2 uv = (2.0 * gl_FragCoord.xy - uResolution.xy) / uResolution;
+        vec2 uv = gl_FragCoord.xy / uResolution;
+        vec4 tex0 = texture2D(mode0Tex, uv);
+        vec4 tex1 = texture2D(mode1Tex, uv);
+
+        vec4 transitionTexel = texture2D( mixTex, uv );
+				float r = transitionRatio * (1.0 + threshold * 2.0) - threshold;
+				float mixf=clamp((transitionTexel.r - r) * (1.0/threshold), 0.0, 1.0);
+
+				gl_FragColor = mix( tex0, tex1, mixf );
+      }
+    `
   });
+
+  let anime = new AnimeLoop(() => {
+    regl.poll();
+    regl.clear({
+      depth: 1,
+      color: [0, 0, 0, 0]
+    });
+
+    globalScope(({ viewportWidth, viewportHeight }) => {
+      fbo.resize(viewportWidth, viewportHeight);
+      // TODO: after transition done, remove all modes except the last one
+      draw2FragData();
+      // for(let draw of drawModes) {
+      //   draw();
+      // }
+
+      draw2Screen({
+        transitionRatio: clamp(anime.runTime / 5000, 0, 1)
+      });
+    });
+  });
+
+}).catch(e => {
+  document.querySelector('#message').innerHTML = 'Something went wrong.<br>' + e.message;
+  console.log(e);
 });
