@@ -22,8 +22,8 @@
     "uglify-es": "^3.1.6"
   },
   "scripts": {
-    "start": "budo src/js/index.js:bundle.js -v -d src --live -- -t [ babelify ]",
-    "build": "cp -f src/index.html dist/index.html && browserify -t [ babelify ] src/js/index.js | uglifyjs -cm > bundle.js"
+    "start": "budo src/js/index.js:bundle.js -v -d src --live -- -t [ babelify glslify ]",
+    "build": "cp -f src/index.html dist/index.html && browserify -t [ babelify ] src/js/index.js | uglifyjs -cm > dist/bundle.js"
   },
   "private": true,
   "keywords": [
