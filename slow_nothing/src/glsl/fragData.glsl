@@ -78,6 +78,40 @@ vec4 modeSlow1(vec2 p, float t, float noiseTime, float noiseSTime, float noiseST
     1.0);
 }
 
+vec4 modeSlow2(vec2 p, float t, float noiseTime, float noiseSTime, float noiseSTime1, float blur) {
+  vec2 temp = cos((p.y - p.x) + t + PI * vec2(noiseSTime, noiseSTime1));
+  for(int i=1; i <= complexity; i++) {
+    p += blur / float(i) * sin(t + temp)
+      + fixedOffset;
+  }
+  p += uMouse * mouseSpeed;
+
+  vec2 grid = uGrid * 2.0; // set complexity to 0 to debug the grid
+  return vec4(
+    baseColor * vec3(
+      sin(grid * p + vec2(2.0 * noiseSTime, 3.0 * noiseSTime1)),
+      sin(p.x + p.y + noiseSTime)
+    )
+    + baseColor,
+    1.0);
+}
+
+vec4 modeWater(vec2 p, float t, float noiseTime, float noiseSTime, float noiseSTime1, float blur) {
+  const float color_intensity = 0.7;
+  for(int i=1; i <= complexity; i++) {
+    p += blur / float(i) * vec2(
+      sin(float(i) * p.y + t*fluidSpeed + PI * noiseTime),
+      sin(float(i) * p.x + t*fluidSpeed + PI * noiseTime)
+    )
+    + uMouse * mouseSpeed * 0.05 + fixedOffset;
+  }
+  return vec4(
+    color_intensity * sin(uGrid.x * p.x + noiseSTime) + color_intensity,
+    color_intensity * sin(uGrid.y * p.y + noiseSTime1) + color_intensity,
+    color_intensity * sin(p.x + p.y + t) + color_intensity,
+    1.0);
+}
+
 void main() {
   vec2 p = (2.0 * gl_FragCoord.xy - uResolution) / min(uResolution.x, uResolution.y) * 0.7;
   float t = uTime * fluidSpeed + uMorph;

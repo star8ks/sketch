@@ -60,13 +60,15 @@ const fbo = regl.framebuffer({
   depth: false
 });
 
+const modes = ['modeOrigin', 'modeSlow2', 'modeWater', 'modeSlow1'];
+const currentMode = [modes[0], modes[1]];
 // TODO: if click on another mode through UI, push mode to `drawModes`
-const draw2FragData = regl({
-  frag: `precision mediump float;
+let draw2FragData = regl({
+  frag: () => `precision mediump float;
 #extension GL_EXT_draw_buffers : require
 #define SEED ${seed}
-#define MODE0 modeOrigin
-#define MODE1 modeSlow1
+#define MODE0 ${currentMode[0]}
+#define MODE1 ${currentMode[1]}
 ` + glslify.file('../glsl/fragData.glsl'),
   framebuffer: fbo
 });
@@ -77,7 +79,19 @@ Promise.all([
 ]).then(data => {
   const mixImage = data[0];
   UI.onSwitch('switch', () => {
+    currentMode[0] = currentMode[1];
+    currentMode[1] = currentMode[0];
 
+    // does not work
+    draw2FragData = regl({
+      frag: () => `precision mediump float;
+#extension GL_EXT_draw_buffers : require
+#define SEED ${seed}
+#define MODE0 ${currentMode[0]}
+#define MODE1 ${currentMode[1]}
+` + glslify.file('../glsl/fragData.glsl'),
+      framebuffer: fbo
+    });
   });
 
   const draw2Screen = regl({
@@ -94,18 +108,18 @@ Promise.all([
       uniform sampler2D mixTex;
       uniform float transitionRatio;
 
-      const float threshold = 0.4;
+      const float threshold = 0.36;
       void main() {
-        // vec2 uv = (2.0 * gl_FragCoord.xy - uResolution.xy) / uResolution;
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 tex0 = texture2D(mode0Tex, uv);
         vec4 tex1 = texture2D(mode1Tex, uv);
 
-        vec4 transitionTexel = texture2D( mixTex, uv );
+        // from https://github.com/fernandojsg/three.js-demos/blob/master/crossfade/js/transition.js
+        vec4 mixMap = texture2D( mixTex, uv );
 				float r = transitionRatio * (1.0 + threshold * 2.0) - threshold;
-				float mixf=clamp((transitionTexel.r - r) * (1.0/threshold), 0.0, 1.0);
+				float mixf = clamp((mixMap.r - r) * (1.0/threshold), 0.0, 1.0);
 
-				gl_FragColor = mix( tex0, tex1, mixf );
+				gl_FragColor = mix( tex1, tex0, mixf );
       }
     `
   });
