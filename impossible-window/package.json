@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.6.1",
     "babelify": "^7.3.0",
     "browserify": "^14.0.0",
@@ -26,7 +27,7 @@
   },
   "scripts": {
     "start": "budo src/js/index.js:bundle.js -v -d src --live -- -t [ babelify ]",
-    "build": "browserify -t [ babelify ] src/js/index.js | uglifyjs -cm > src/bundle.js"
+    "build": "cp -f src/index.html dist && cp -rf src/static dist && browserify -t [ babelify ] src/js/index.js | uglifyjs -cm > dist/bundle.js"
   },
   "private": true,
   "keywords": [

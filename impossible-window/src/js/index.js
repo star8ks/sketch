@@ -23,14 +23,14 @@ const scope = drawScope(regl);
 const pointer = new Pointer(canvas);
 
 const sound = {
-  flashback: new Audio('./sound/167683__minecast__flashback-transition.mp3'),
-  yes: new Audio('./sound/245314__bwsmithatl__production-sounder-button-zipper-usage.wav'),
-  no: new Audio('./sound/400372__psykoosiossi__fastwhoosh.wav')
+  flashback: new Audio('./static/sound/167683__minecast__flashback-transition.mp3'),
+  yes: new Audio('./static/sound/245314__bwsmithatl__production-sounder-button-zipper-usage.wav'),
+  no: new Audio('./static/sound/400372__psykoosiossi__fastwhoosh.wav')
 };
 
 
 Promise.all([
-  ModelLoader.loadObj('oscar1.obj'),
+  ModelLoader.loadObj('./static/oscar1.obj'),
   onceLoaded()
 ])
 .then(data => {

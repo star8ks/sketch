@@ -23,7 +23,7 @@
   },
   "scripts": {
     "start": "budo src/js/index.js:bundle.js -v -d src --live -- -t [ babelify glslify ]",
-    "build": "cp -f src/index.html dist/index.html && cp -rf src/static dist/static && browserify -t [ babelify ] src/js/index.js | uglifyjs -cm > dist/bundle.js"
+    "build": "cp -f src/index.html dist && cp -rf src/static dist && browserify -t [ babelify ] src/js/index.js | uglifyjs -cm > dist/bundle.js"
   },
   "private": true,
   "keywords": [

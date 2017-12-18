@@ -4,6 +4,8 @@ import { normalRGB } from './util';
 
 /**
  * return a draw scope
+ * TODO move camara related status to context, see http://regl.party/api#context
+ * TODO make camera moveable by control the second parm of mat4.lookAt
  */
 const drawScope = function (regl) {
   const scope = {
@@ -26,7 +28,7 @@ const drawScope = function (regl) {
     near: 0.1,
     far: 100,
     viewScale: 0.8,
-    light1Direction: [1, -0.3, 1],
+    light1Direction: [1, -0.5, 1],
 
     // keeps track of all global state.
     global: regl({

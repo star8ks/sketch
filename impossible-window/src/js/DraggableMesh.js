@@ -77,7 +77,6 @@ class DraggableMesh extends Mesh {
 
     // console.log('front', this.frontVerts);
     // console.log('back', this.backVerts);
-    console.log('start: ', this.start);
   }
 
   _getVertGroup(index, findNormal, cb) {
@@ -266,8 +265,11 @@ class DraggableMesh extends Mesh {
   sameAsStart() {
     const keys = Object.keys(this.start);
     for (const key of keys) {
-      // if (typeof this[key] !== 'number') continue;
-      if (Math.abs(this[key] - this.start[key]) > DraggableMesh.vertexCompareError) return false;
+      if (typeof this.start[key] !== 'number') continue;
+
+      if (Math.abs(this[key] - this.start[key]) > DraggableMesh.vertexCompareError) {
+        return false;
+      }
     }
     return true;
   }
