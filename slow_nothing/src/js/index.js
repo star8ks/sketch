@@ -63,17 +63,31 @@ const fbo = regl.framebuffer({
 });
 
 const modes = ['modeWater', 'modeSlow1','modeOrigin',  'modeSlow2'];
-const currentMode = [modes[0], modes[1]];
-// TODO: if click on another mode through UI, push mode to `drawModes`
-let draw2FragData = regl({
-  frag: () => `precision mediump float;
-#extension GL_EXT_draw_buffers : require
-#define SEED ${seed}
-#define MODE0 ${currentMode[0]}
-#define MODE1 ${currentMode[1]}
-` + glslify.file('../glsl/fragData.glsl'),
-  framebuffer: fbo
-});
+let currentMode = [], currentModeIndex;
+
+// draw modes cycling
+function cycleDraw2FragData(increment = 1) {
+  currentMode[0] = currentModeIndex ? currentMode[1] : modes[0];
+  if (currentModeIndex) {
+    const nextIndex = (currentModeIndex + increment) % modes.length;
+    currentMode[1] = modes[nextIndex];
+    currentModeIndex = nextIndex;
+  } else {
+    currentMode[1] = modes[1];
+    currentModeIndex = 1;
+  }
+
+  return regl({
+    frag: () => `precision mediump float;
+  #extension GL_EXT_draw_buffers : require
+  #define SEED ${seed}
+  #define MODE0 ${currentMode[0]}
+  #define MODE1 ${currentMode[1]}
+  ` + glslify.file('../glsl/fragData.glsl'),
+    framebuffer: fbo
+  });
+}
+let draw2FragData = cycleDraw2FragData();
 
 Promise.all([
   ImageLoader.load('./static/mix.jpg'),
@@ -81,21 +95,8 @@ Promise.all([
 ]).then(data => {
   const mixImage = data[0];
 
-  // draw modes cycling
-  UI.onSwitch('switch', () => {
-    const temp = currentMode[0];
-    currentMode[0] = currentMode[1];
-    currentMode[1] = temp;
-
-    draw2FragData = regl({
-      frag: () => `precision mediump float;
-#extension GL_EXT_draw_buffers : require
-#define SEED ${seed}
-#define MODE0 ${currentMode[0]}
-#define MODE1 ${currentMode[1]}
-` + glslify.file('../glsl/fragData.glsl'),
-      framebuffer: fbo
-    });
+  UI.onSwitch('switch', (e, el) => {
+    draw2FragData = cycleDraw2FragData(parseInt(el.dataset['increment']));
   });
 
   const draw2Screen = regl({
