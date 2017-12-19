@@ -17,6 +17,7 @@ pointer.addPressingListener(e => {
   morphAmount += pointer.pressCheckInterval / 1000 * pointer.pressure * 0.1;
 });
 
+// TODO: show control notice: Click and Hold, Drag move to explore
 // TODO: user defined fragment shader
 // TODO: masking transition on switching shaders
 const globalScope = regl({
@@ -138,11 +139,7 @@ Promise.all([
 
     globalScope(({ viewportWidth, viewportHeight }) => {
       fbo.resize(viewportWidth, viewportHeight);
-      // TODO: after transition done, remove all modes except the last one
       draw2FragData();
-      // for(let draw of drawModes) {
-      //   draw();
-      // }
       transitionT += dt;
       draw2Screen({
         transitionRatio: clamp(transitionT / 5000, 0, 1)
@@ -151,6 +148,7 @@ Promise.all([
   });
 
   UI.onSwitch('switch', (e, el) => {
+    // TODO: after transition done, only render current mode
     draw2FragData = cycleDraw2FragData(parseInt(el.dataset['increment']));
     transitionT = 0;
   });
