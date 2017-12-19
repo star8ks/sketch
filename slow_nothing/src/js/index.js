@@ -67,16 +67,19 @@ let currentMode = [], currentModeIndex;
 
 // draw modes cycling
 function cycleDraw2FragData(increment = 1) {
-  currentMode[0] = currentModeIndex ? currentMode[1] : modes[0];
-  if (currentModeIndex) {
-    const nextIndex = (currentModeIndex + increment) % modes.length;
-    currentMode[1] = modes[nextIndex];
-    currentModeIndex = nextIndex;
-  } else {
+  if (typeof currentModeIndex === 'undefined') {
+    currentMode[0] = modes[0];
     currentMode[1] = modes[1];
     currentModeIndex = 1;
+  } else {
+    currentMode[0] = currentMode[1];
+    // mod modes.length to cycling
+    const nextIndex = currentModeIndex + increment;
+    currentMode[1] = modes[Math.abs(nextIndex) % modes.length];
+    currentModeIndex = nextIndex;
   }
 
+  // console.log('current mode: ', currentMode[1]);
   return regl({
     frag: () => `precision mediump float;
   #extension GL_EXT_draw_buffers : require
@@ -94,10 +97,6 @@ Promise.all([
   onceLoaded()
 ]).then(data => {
   const mixImage = data[0];
-
-  UI.onSwitch('switch', (e, el) => {
-    draw2FragData = cycleDraw2FragData(parseInt(el.dataset['increment']));
-  });
 
   const draw2Screen = regl({
     uniforms: {
@@ -129,7 +128,8 @@ Promise.all([
     `
   });
 
-  let anime = new AnimeLoop(() => {
+  let transitionT = 0;
+  let anime = new AnimeLoop(dt => {
     regl.poll();
     regl.clear({
       depth: 1,
@@ -143,11 +143,16 @@ Promise.all([
       // for(let draw of drawModes) {
       //   draw();
       // }
-
+      transitionT += dt;
       draw2Screen({
-        transitionRatio: clamp(anime.runTime / 5000, 0, 1)
+        transitionRatio: clamp(transitionT / 5000, 0, 1)
       });
     });
+  });
+
+  UI.onSwitch('switch', (e, el) => {
+    draw2FragData = cycleDraw2FragData(parseInt(el.dataset['increment']));
+    transitionT = 0;
   });
 
 }).catch(e => {
@@ -155,3 +160,6 @@ Promise.all([
   document.querySelector('#message').innerHTML = 'Something went wrong.<br>' + e.message;
   console.log(e);
 });
+
+
+console.log('You only see what you know.');
