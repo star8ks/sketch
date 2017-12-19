@@ -57,10 +57,12 @@ const fbo = regl.framebuffer({
     regl.texture({ type: 'float' })
   ],
   colorCount: 2,
-  depth: false
+  depth: false,
+  stencil: false,
+  depthStencil: false
 });
 
-const modes = ['modeSlow2', 'modeSlow1', 'modeOrigin', 'modeWater'];
+const modes = ['modeWater', 'modeSlow1','modeOrigin',  'modeSlow2'];
 const currentMode = [modes[0], modes[1]];
 // TODO: if click on another mode through UI, push mode to `drawModes`
 let draw2FragData = regl({
@@ -78,11 +80,13 @@ Promise.all([
   onceLoaded()
 ]).then(data => {
   const mixImage = data[0];
-  UI.onSwitch('switch', () => {
-    currentMode[0] = currentMode[1];
-    currentMode[1] = currentMode[0];
 
-    // does not work
+  // draw modes cycling
+  UI.onSwitch('switch', () => {
+    const temp = currentMode[0];
+    currentMode[0] = currentMode[1];
+    currentMode[1] = temp;
+
     draw2FragData = regl({
       frag: () => `precision mediump float;
 #extension GL_EXT_draw_buffers : require
