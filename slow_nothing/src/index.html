@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Nothing</title>
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <link rel="stylesheet" href="./static/css/font-awesome.min.css">
   <style type="text/css">
     *, *:before, *:after{box-sizing: border-box; padding: 0;}
     html, body {width: 100%; height: 100%; margin: 0;}
@@ -74,8 +75,6 @@
       font-size: 2em;
       color: white;
       transform: translateY(-50%);
-      background: #000000ab;
-      border-radius: 50%;
     }
     .switch:hover {
       transform: scale(1.1) translateY(-50%);
@@ -88,25 +87,13 @@
       right: .5em;
       /* text-shadow: 0.2em 0px 0.2em #000; */
     }
-    .switch:before {
-      height: 1em;
-      width: 1em;
-      line-height: 1em;
-      display: inline-block;
-    }
-    .switch.prev:before {
-      content: '🠜'; text-align: left;
-    }
-    .switch.next:before {
-      content: '🠞'; text-align: right;
-    }
   </style>
 </head>
 <body>
   <p id="message"></p>
 
-  <div class="switch prev"></div>
-  <div class="switch next"></div>
+  <div class="switch prev"><i class="fa fa-arrow-circle-left" aria-hidden="true"></i></div>
+  <div class="switch next"><i class="fa fa-arrow-circle-right" aria-hidden="true"></i></div>
 
   <footer class="fancy-underline author">
     <span>Nothing</span>
