@@ -112,7 +112,7 @@ Promise.all([
       uniform sampler2D mixTex;
       uniform float transitionRatio;
 
-      const float threshold = 0.36;
+      const float threshold = 0.86;
       void main() {
         vec2 uv = gl_FragCoord.xy / uResolution;
         vec4 tex0 = texture2D(mode0Tex, uv);
