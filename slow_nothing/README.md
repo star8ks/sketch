@@ -55,4 +55,4 @@ UI.onSwitch('switch', (e, el) => {
 });
 ```
 
-This is similar to the prticle states cycling process of this [Particles Flowing case](https://bl.ocks.org/pbeshai/dbed2fdac94b44d3b4573624a37fa9db) by Peter Beshai.
+This is similar to the prticle states cycling process of this [Particles Flowing case](https://bl.ocks.org/pbeshai/dbed2fdac94b44d3b4573624a37fa9db) by Peter Beshai, from which I get inspiration.

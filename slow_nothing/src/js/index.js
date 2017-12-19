@@ -8,8 +8,8 @@ import {onceLoaded, clamp} from './util';
 import ImageLoader from './ImageLoader';
 import UI from './UI';
 
-const DEV = true;
-const seed = DEV ? 13875.579831 : new Date().getTime() % 100000 + 0.5831;
+const DEV = false;
+const seed = DEV ? 13875.579831 : new Date().getTime() % 300000 + 0.5731;
 
 const pointer = new Pointer(regl._gl.canvas);
 let morphAmount = 0;
