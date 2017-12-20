@@ -63,7 +63,7 @@ const fbo = regl.framebuffer({
   depthStencil: false
 });
 
-const modes = ['modeWater', 'modeSlow1','modeOrigin',  'modeSlow2'];
+const modes = ['modeWater', 'modeSlow1', 'modeOrigin', 'modeSlow2', 'modeBalance', 'modeCake', 'modePeople', 'modeSunny', 'modeWaveX', 'modeWaveY'];
 let currentMode = [], currentModeIndex;
 
 // draw modes cycling
@@ -76,14 +76,15 @@ function cycleDraw2FragData(increment = 1) {
     currentMode[0] = currentMode[1];
     // mod modes.length to cycling
     const nextIndex = currentModeIndex + increment;
-    currentMode[1] = modes[Math.abs(nextIndex) % modes.length];
+    const index = nextIndex >= 0 ? nextIndex : modes.length - (Math.abs(nextIndex) % modes.length)
+    currentMode[1] = modes[index];
     currentModeIndex = nextIndex;
   }
 
-  // console.log('current mode: ', currentMode[1]);
+  console.log('current mode: ', currentMode[1]);
   return regl({
-    frag: () => `precision mediump float;
-  #extension GL_EXT_draw_buffers : require
+    frag: () => `#extension GL_EXT_draw_buffers : require
+  precision mediump float;
   #define SEED ${seed}
   #define MODE0 ${currentMode[0]}
   #define MODE1 ${currentMode[1]}
