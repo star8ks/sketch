@@ -2,7 +2,7 @@
 
 ![demo](./demo.gif)
 
-[demo](https://ray7551.github.io/sketch/slow_nothing)
+[Play it here](https://ray7551.github.io/sketch/slow_nothing)
 
 ## Masking Transition
 
@@ -31,7 +31,10 @@ function cycleDraw2FragData(increment = 1) {
     currentMode[0] = currentMode[1];
     // mod modes.length to cycling
     const nextIndex = currentModeIndex + increment;
-    currentMode[1] = modes[Math.abs(nextIndex) % modes.length];
+    const index = nextIndex >= 0
+      ? nextIndex % modes.length
+      : modes.length - (Math.abs(nextIndex) % modes.length);
+    currentMode[1] = modes[index];
     currentModeIndex = nextIndex;
   }
 

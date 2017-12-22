@@ -76,7 +76,9 @@ function cycleDraw2FragData(increment = 1) {
     currentMode[0] = currentMode[1];
     // mod modes.length to cycling
     const nextIndex = currentModeIndex + increment;
-    const index = nextIndex >= 0 ? nextIndex : modes.length - (Math.abs(nextIndex) % modes.length)
+    const index = nextIndex >= 0
+      ? nextIndex % modes.length
+      : modes.length - (Math.abs(nextIndex) % modes.length);
     currentMode[1] = modes[index];
     currentModeIndex = nextIndex;
   }
