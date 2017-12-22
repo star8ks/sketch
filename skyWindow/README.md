@@ -1,4 +1,7 @@
 # Sky Window
+
+![demo](./demo.gif)
+
 [Play it here](https://rawgit.com/ray7551/sketch/master/skyWindow/index.html)
 
 Fractal brownian motion simulated clouds.
