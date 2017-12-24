@@ -251,6 +251,7 @@ void main() {
   float blur = (BLUR + 0.14 * noiseSTime);
   vec2 mouseMoveOffset = uMouse * mouseSpeed;
 
+  // TODO: color mapping from rgb to gbr or sth different color space
   gl_FragData[0] = MODE0(p, mouseMoveOffset, t, noiseTime, noiseSTime, noiseSTime1, blur);
   gl_FragData[1] = MODE1(p, mouseMoveOffset, t, noiseTime, noiseSTime, noiseSTime1, blur);
 }
