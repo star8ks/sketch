@@ -8,7 +8,6 @@ uniform vec2 uMouse;
 uniform float uScale;
 uniform vec2 uTextureOffset;
 uniform float uMorphAmount;
-uniform float uRandomSeed;
 uniform vec3 uBlue;
 
 
@@ -18,7 +17,7 @@ uniform vec3 uBlue;
 #define ROTATE mat2(cos(ANGLE), -sin(ANGLE), sin(ANGLE), cos(ANGLE))
 
 float hash(float n) {
-  return fract(sin(n) * uRandomSeed);
+  return fract(sin(n) * RANDOM_SEED);
 }
 
 // return a smooth random between min and max
@@ -37,7 +36,7 @@ float noise(vec3 x) {
   const vec3 step = vec3(1.0, 80.0, 800.0);
   vec3 i = floor(x);
   vec3 f = fract(x);
-  // For performance, compute the base input to a 1D hash from the integer part of the argument and the 
+  // For performance, compute the base input to a 1D hash from the integer part of the argument and the
   // incremental change to the 1D based on the 3D -> 1D wrapping
   float n = dot(i, step);
 
@@ -89,6 +88,7 @@ float cloud(vec3 p) {
   #endif
   return a * a;
 }
+
 #define SHADOW_THRESHOLD 0.5
 #define SHADOW_GRAY 0.76
 vec3 skyWindow(vec3 position, vec2 screen) {

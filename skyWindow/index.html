@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>three-glslify-example</title>
-  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">  
+  <title>Sky Window</title>
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
   <style type="text/css">
     html, body {
       margin: 0; padding: 0;
@@ -21,20 +21,21 @@
 <body>
   <script src="bundle.js"></script>
   <script>
-    // (function(){
-    //   var script=document.createElement('script');
-    //   script.onload=function(){
-    //     var stats=new Stats();
-    //     // stats.showPanel(1);
-    //     document.body.appendChild(stats.dom);
-    //     requestAnimationFrame(function loop(){
-    //       stats.update();
-    //       requestAnimationFrame(loop)
-    //     });
-    //   };
-    //   script.src='https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js';
-    //   document.head.appendChild(script);
-    // })();
+    (function(){
+      if(!window.dev) return;
+      var script=document.createElement('script');
+      script.onload=function(){
+        var stats=new Stats();
+        // stats.showPanel(1);
+        document.body.appendChild(stats.dom);
+        requestAnimationFrame(function loop(){
+          stats.update();
+          requestAnimationFrame(loop)
+        });
+      };
+      script.src='https://cdn.rawgit.com/mrdoob/stats.js/master/build/stats.min.js';
+      document.head.appendChild(script);
+    })();
   </script>
 </body>
 </html>

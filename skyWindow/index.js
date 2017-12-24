@@ -13,6 +13,7 @@ const app = createOrbitViewer({
   // clearColor: 0x4188E7,
   // clearAlpha: 1.0,
   contextAttributes: {precision: 'mediump'},
+  // contextAttributes: {precision: 'highp'},
   clearColor: blue[0].getHex(), //0.247, 0.529, 0.905
   clearAlpha: 1.0,
   fov: 40,
@@ -37,8 +38,12 @@ const shaderMat = new THREE.ShaderMaterial({
     uScale: { type: "f", value: 1.0 },
     uTextureOffset: new THREE.Uniform(new THREE.Vector2(0, 0)),
     uMorphAmount: { type: "f", value: 0.0 },
-    uRandomSeed: { type: "f", value: randomSeed },
+    // uRandomSeed: { type: "f", value: randomSeed },
     uBlue: new THREE.Uniform(new THREE.Vector3(...blue[0].toArray()))
+  },
+  defines: {
+    RANDOM_SEED: randomSeed + 0.45377,
+    // RANDOM_SEED2: randomSeed * 8 + 0.45377,
   },
   transparent: true,
   side: THREE.DoubleSide
@@ -53,7 +58,7 @@ app.camera.lookAt(skyWindow.position);
 
 const mouse = new Pointer(app.renderer.domElement, {
   scaleMin: 0.4,
-  scaleMax: 2.0,
+  scaleMax: 4.0,
   pressureDuration: 2300
 });
 
@@ -77,8 +82,8 @@ let dtSec = 0;
 let lastPressingT;
 let textureOffset = new THREE.Vector2(0, 0);
 let morphAmount = 0;
-const morphSpeed = devEnv ? 0.02 : 0.004;
 const cloudRunSpeed = devEnv ? 0.8 : 0.03;
+const morphSpeed = devEnv ? 0.8 : 0.006;
 const blueVarySpeed = devEnv ? 0.4 : 0.05;
 mouse.addPressingListener(e => {
   lastPressingT = lastPressingT || Date.now();
@@ -102,6 +107,7 @@ mouse.addPressingListener(e => {
   // shaderMat.needChange = true;
   app.engine.context.clearColor(...newBlue, 1.0);
 });
+// TODO: use mouse.pressCheckInterval/1000 instead of dtSec to make code clearer
 mouse.addPressingEndListener(() => {
   lastPressingT = undefined;
 });
@@ -116,7 +122,7 @@ app.on('tick', dt => {
 let fovRunning = false;
 let leftTopPoint = skyWindow.geometry.vertices[0];
 const targetSize = 0.8;
-const deltaFov = 0.4;
+const deltaFov = 0.2;
 app.on('resize', () => {
   if(fovRunning || devEnv) return;
   (function fovAnimation() {
@@ -150,6 +156,7 @@ console.log('The shape of the sea is the shape of blue.');
 console.log('Don\'t know how clouds changing? Stare at them.');
 
 if(devEnv) {
+  window.dev = true;
   window.t = THREE;
   window.c = app.camera;
   window.s = skyWindow;
