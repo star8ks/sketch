@@ -64,7 +64,14 @@ const fbo = regl.framebuffer({
 });
 
 const modes = ['modeWater', 'modeSlow1', 'modeOrigin', 'modeSlow2', 'modeBalance', 'modeCake', 'modePeople', 'modeSunny', 'modeWaveX', 'modeWaveY'];
-let currentMode = [], currentModeIndex;
+const pallete = [
+  ['vec4(1.0, 0.0, 0.0, 0.0)', 'vec4(0.0, 1.0, 0.0, 0.0)', 'vec4(0.0, 0.0, 1.0, 0.0)', 'vec4(0.0, 0.0, 0.0, 1.0)'],
+  ['vec4(1.0, 0.5, 0.3, 0.0)', 'vec4(-0.8, 1.0, 0.0, 0.0)', 'vec4(0.8, 0.0, 1.0, 0.0)', 'vec4(0.0, 0.0, 0.0, 1.0)'],
+  ['vec4(1.0, 0.0, -0.2, 0.0)', 'vec4(-0.3, 0.4, 0.8, 0.0)', 'vec4(0.6, 0.0, 1.0, 0.0)', 'vec4(0.0, 0.0, 0.0, 1.0)'], // rad and blue
+  // ['vec4(0.4, -0.3, 0.6, 0.0)', 'vec4(0.0, 1.0, -0.2, 0.0)', 'vec4(0.0, 0.6, 1.0, 0.0)', 'vec4(0.0, 0.0, 0.0, 1.0)'], // green and blue
+  ['vec4(0.1, 0.0, 0.0, 0.0)', 'vec4(1.0, 1.0, 0.0, 0.0)', 'vec4(0.0, 0.0, 1.0, 0.0)', 'vec4(0.0, 0.0, 0.0, 1.0)']
+];
+let currentMode = [], currentModeIndex, currentPaletteIndex=0;
 
 // draw modes cycling
 function cycleDraw2FragData(increment = 1) {
@@ -90,6 +97,10 @@ function cycleDraw2FragData(increment = 1) {
   #define SEED ${seed}
   #define MODE0 ${currentMode[0]}
   #define MODE1 ${currentMode[1]}
+  #define PALETTE_R ${pallete[currentPaletteIndex][0]}
+  #define PALETTE_G ${pallete[currentPaletteIndex][1]}
+  #define PALETTE_B ${pallete[currentPaletteIndex][2]}
+  #define PALETTE_A ${pallete[currentPaletteIndex][3]}
   ` + glslify.file('../glsl/fragData.glsl'),
     framebuffer: fbo
   });

@@ -242,6 +242,10 @@ vec4 modeWaveY(vec2 p, vec2 mouseMoveOffset, float t, float noiseTime, float noi
     1.0);
 }
 
+vec4 colorMap(vec4 c) {
+  return PALETTE_R * c.r + PALETTE_G * c.g + PALETTE_B * c.b + PALETTE_A * c.a;
+}
+
 void main() {
   vec2 p = (2.0 * gl_FragCoord.xy - uResolution) / min(uResolution.x, uResolution.y) * 0.7;
   float t = uTime * fluidSpeed * 1.4 + uMorph;
@@ -252,6 +256,6 @@ void main() {
   vec2 mouseMoveOffset = uMouse * mouseSpeed;
 
   // TODO: color mapping from rgb to gbr or sth different color space
-  gl_FragData[0] = MODE0(p, mouseMoveOffset, t, noiseTime, noiseSTime, noiseSTime1, blur);
-  gl_FragData[1] = MODE1(p, mouseMoveOffset, t, noiseTime, noiseSTime, noiseSTime1, blur);
+  gl_FragData[0] = colorMap(MODE0(p, mouseMoveOffset, t, noiseTime, noiseSTime, noiseSTime1, blur));
+  gl_FragData[1] = colorMap(MODE1(p, mouseMoveOffset, t, noiseTime, noiseSTime, noiseSTime1, blur));
 }
