@@ -1,0 +1,39 @@
+{
+  "name": "regl-example",
+  "version": "1.0.0",
+  "description": "a simple example of regl",
+  "main": "index.js",
+  "license": "MIT",
+  "author": {
+    "name": "ray7551",
+    "email": "dave.des@gmail.com",
+    "url": "https://github.com/ray7551"
+  },
+  "dependencies": {
+    "regl": "^1.3.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babelify": "^8.0.0",
+    "browserify": "^14.0.0",
+    "budo": "^10.0.4",
+    "glslify": "^6.0.1",
+    "uglify-es": "^3.1.6"
+  },
+  "scripts": {
+    "start": "budo src/js/index.js:bundle.js -v -d src --live -- -t [ babelify glslify ]",
+    "build": "cp -f src/index.html dist && cp -rf src/static dist && browserify -t [ babelify ] src/js/index.js | uglifyjs -cm > dist/bundle.js"
+  },
+  "private": true,
+  "keywords": [
+    "glsl",
+    "regl"
+  ],
+  "browserify": {
+    "transform": [
+      "babelify",
+      "glslify"
+    ]
+  }
+}
