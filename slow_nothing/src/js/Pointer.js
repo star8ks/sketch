@@ -45,6 +45,8 @@ class Pointer {
     this.position.y = ((this.dom.clientHeight - clientY) * 2 - this.dom.clientHeight) / size;
     this.dx = (this.position.x - oldX);
     this.dy = (this.position.y - oldY);
+    this.clientX = clientX;
+    this.clientY = clientY;
   }
 
   onMove(e) {
