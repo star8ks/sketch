@@ -2,11 +2,16 @@ import Pointer from './Pointer';
 import {onceLoaded} from './util';
 import ImageLoader from './ImageLoader';
 
-onceLoaded(() => {
+Promise.all([
+  ImageLoader.load('./static/petals.jpg'),
+  onceLoaded()
+]).then(data => {
+  const petalsImg = data[0];
+  
   let canvas = document.getElementById("board"),
     context = canvas.getContext("2d"),
-    width = canvas.width = document.body.clientWidth,
-    height = canvas.height = document.body.clientHeight,
+    width = canvas.width = window.innerWidth,
+    height = canvas.height = window.innerHeight,
     mouseX = width/2, mouseY = height/2;
 
   const initRSquare = 8000;
@@ -29,7 +34,7 @@ onceLoaded(() => {
     //context.clearRect(0, 0, width, height);
     // set alpha to 0.4 is the secret for making nice trailing effects
     context.fillStyle = "rgba(255,255,255,.4)";
-    context.fillRect(0, 0, width, width);
+    context.fillRect(0, 0, width, height);
 
     for(let line of lines) {
       let x = line.x, y = line.y;
@@ -56,10 +61,11 @@ onceLoaded(() => {
   function draw(line, rotate) {
     context.translate(line.x, line.y);
     context.rotate(rotate || line.rotate);
-    context.beginPath();
-    context.moveTo(0, 0);
-    context.lineTo(20, 1);
-    context.stroke();
+    // context.beginPath();
+    // context.moveTo(0, 0);
+    // context.lineTo(20, 1);
+    // context.stroke();
+    context.drawImage();
   }
 
   function distance2(x1, y1, x2, y2) {
@@ -67,10 +73,15 @@ onceLoaded(() => {
   }
 
   let pointer = new Pointer(canvas);
+  pointer.addDownListener(e => {
+    mouseX = pointer.clientX;
+    mouseY = pointer.clientY;
+  });
   pointer.addMoveListener(e => {
     mouseX = pointer.clientX;
     mouseY = pointer.clientY;
   });
+
   pointer.addPressingListener(e => {
     rSquare += pointer.pressure * 1000;
   });
