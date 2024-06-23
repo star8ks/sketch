@@ -5,9 +5,8 @@
   "main": "index.js",
   "license": "MIT",
   "author": {
-    "name": "Ray Victor",
-    "email": "ray7551@gmail.com",
-    "url": "https://github.com/ray7551"
+    "name": "vico",
+    "url": "https://github.com/star8ks"
   },
   "dependencies": {
     "glslify": "^6.1.0",
@@ -41,7 +40,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/ray7551/sketch.git"
+    "url": "git://github.com/star8ks/sketch.git"
   },
-  "homepage": "https://github.com/ray7551/sketch"
+  "homepage": "https://github.com/star8ks/sketch"
 }

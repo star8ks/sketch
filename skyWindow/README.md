@@ -1,5 +1,5 @@
 # Sky Window
-[Play it here](https://rawgit.com/ray7551/sketch/master/skyWindow/index.html)
+[Play it here](https://star8ks.github.io/sketch/skyWindow)
 
 Fractal brownian motion simulated clouds.
 
