@@ -84,7 +84,7 @@ Promise.all([
     regl.poll();
     regl.clear({
       depth: 1,
-      color: [0.20, 0.53, 0.90, 0]//0x3F87E7
+      color: [0.20, 0.53, 0.90, 1]//0x3F87E7
     });
 
     scope.global(() => {
