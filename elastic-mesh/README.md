@@ -3,7 +3,7 @@ Draggable Elastic Mesh
 [![Remix on Glitch](https://cdn.glitch.com/2703baf2-b643-4da7-ab91-7ee2a2d00b5b%2Fremix-button.svg)](https://glitch.com/edit/#!/remix/monsters-university-id)
 
 ![gif](demo.gif)  
-[Play it here](https://ray7551.github.io/sketch/elastic-mesh)
+[Play it here](https://star8ks.github.io/sketch/elastic-mesh)
 
 A draggable webGL elastic material experiment.
 
@@ -13,7 +13,7 @@ Monsters University ID from [Disney website](http://create.disney.co.uk/monsters
 
 The BOING sound from [juskiddink](https://freesound.org/people/juskiddink/sounds/140867/)
 
-Made by [Ray Victor](https://twitter.com/ray7551)
+Made by [vico](https://github.com/star8ks)
 -------------------
 
 \ ゜o゜)ノ

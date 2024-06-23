@@ -1,7 +1,7 @@
 # Impossible Window
 ![demo gif](./window.gif)
 
-[Play demo here](https://ray7551.github.io/sketch/impossible-window)
+[Play demo here](https://star8ks.github.io/sketch/impossible-window)
 
 Inspired by Oscar Reutersvärd's "Impossible Window"
 

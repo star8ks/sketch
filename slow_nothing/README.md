@@ -2,7 +2,7 @@
 
 ![demo](./demo.gif)
 
-[Play it here](https://ray7551.github.io/sketch/slow_nothing)
+[Play it here](https://star8ks.github.io/sketch/slow_nothing)
 
 ## Masking Transition
 

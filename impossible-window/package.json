@@ -5,9 +5,8 @@
   "main": "index.js",
   "license": "MIT",
   "author": {
-    "name": "ray7551",
-    "email": "dave.des@gmail.com",
-    "url": "https://github.com/ray7551"
+    "name": "vico",
+    "url": "https://github.com/star8ks"
   },
   "dependencies": {
     "gl-mat4": "^1.1.4",
